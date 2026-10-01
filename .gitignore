@@ -1,0 +1,21 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+# future build outputs (monorepo)
+node_modules/
+target/
+dist/
+build/
+*.xcuserstate
+DerivedData/
+.gradle/
+local.properties
+# secrets
+.env
+.env.*
+*.p12
+*.p8
+*.key
