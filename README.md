@@ -11,11 +11,11 @@
 | 想知道 | 讀這份 |
 |---|---|
 | **自用版要怎麼做**（Mac 用 Handy 起手、iPhone 小 App + Action Button、模型選擇、四週計畫） | [`docs/PLAN.md`](docs/PLAN.md) |
-| 商用版（五平台、後端、收款、上架、12 週計畫、成本、風險） | [`docs/design/final-plan-v1.md`](docs/design/final-plan-v1.md) 與其批評／修訂 |
+| 商用版（五平台、後端、收款、上架、12 週計畫、成本、風險） | [`docs/design/final-plan-v2.md`](docs/design/final-plan-v2.md)（v1 與其批評也在同目錄） |
 | 為什麼這樣選（11 份研究報告，含原始碼級細節與來源 URL） | [`docs/research/README.md`](docs/research/README.md) |
 | 關鍵主張有沒有被查證、哪些被修正 | [`docs/research/_verification.md`](docs/research/_verification.md) |
 | 三條路線（MVP-first / Local-first / Quality-first）各自長什麼樣、評審怎麼打分 | [`docs/design/`](docs/design/) |
-| 第一版方案被挑出哪些問題、第二版怎麼改 | [`docs/design/_critique-of-plan-v1.md`](docs/design/_critique-of-plan-v1.md)、`docs/PLAN.md` 末尾的變更紀錄 |
+| 商用版第一版被挑出哪些問題、第二版怎麼改 | [`docs/design/_critique-of-plan-v1.md`](docs/design/_critique-of-plan-v1.md)、[`docs/design/final-plan-v2.md`](docs/design/final-plan-v2.md) 附錄 B 變更紀錄 |
 
 ## 自用版結論（Mac + iPhone）
 
@@ -44,7 +44,7 @@
 
 ## 第一週就能動手的事
 
-詳見 `docs/PLAN.md` 第 12 節。濃縮版：
+自用版詳見 `docs/PLAN.md` 第 1 節與第 6 節；商用版的完整第一週清單在 `docs/design/final-plan-v2.md` 第 12 節。濃縮版：
 
 1. 開帳號與金鑰：Apple Developer、Cloudflare Workers Paid、Supabase（Tokyo）、Anthropic / ElevenLabs / Deepgram / Azure Speech、Paddle 與備案 MoR 的賣家 KYC、Azure Trusted Signing 身分驗證試開。
 2. `git subtree add` Handy v0.9.7 到 `apps/desktop`，先確認原版在 macOS 27 能跑；開 Worker 骨架與 Supabase migrations。
@@ -57,6 +57,7 @@
 
 - [x] 研究（11 份）與查證
 - [x] 三條路線提案與評審
-- [x] 最終方案 v1 → 完整性批評 → v2（`docs/PLAN.md`）
+- [x] 商用版方案 v1 → 完整性批評 → v2（`docs/design/final-plan-v2.md`）
+- [x] 依「純自用、Mac + iPhone」重新定範圍（`docs/PLAN.md`）
 - [ ] 第一週 spike 與 bake-off（需要真機與可上網環境）
 - [ ] 程式碼

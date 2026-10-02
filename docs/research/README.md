@@ -6,7 +6,7 @@
 
 - 研究是在受限的雲端容器內進行，出口代理封鎖了多數商業網站：`typeless.com`、`wisprflow.ai`、`superwhisper.com`、`apps.apple.com`、`play.google.com`、`stripe.com`、`paddle.com`、`learn.microsoft.com`、`support.google.com`、`openai.com`、`deepgram.com`、`huggingface.co`、`arxiv.org` 等。能直接讀到一手來源的主要是 **Apple Developer、Android Developers、Google Cloud、Anthropic/Claude Platform、GitHub（含 raw 原始碼）、Cloudflare/Supabase 文件原始碼**。
 - 因此：**競品定價、第三方 API 價格、Play/Store 政策細節**多半來自搜尋摘要或第三方整理頁（部分整理頁本身是競品部落格，有利益衝突），報告內一律標示「待驗證」「⚠」「[二手]」。**開源專案的技術細節**則是直接 clone 並讀原始碼，可信度高。
-- 每份報告末尾都有「未解問題」清單；所有需要真機或官方頁面才能確認的項目，已彙整進 [`../PLAN.md`](../PLAN.md) 的「第 0 週驗證清單」。
+- 每份報告末尾都有「未解問題」清單；所有需要真機或官方頁面才能確認的項目，自用版需要的 spike 在 [`../PLAN.md`](../PLAN.md) 第 6 節（W1–W2），商用版的完整第一週驗證清單在 [`../design/final-plan-v2.md`](../design/final-plan-v2.md) 第 12 節。
 
 ## 報告清單
 
@@ -29,7 +29,7 @@
 
 1. **Typeless 預設快捷鍵**：官方說明中心記載 macOS 為 `Fn`（Dictate）/ `Fn+Left Shift`（Translate）/ `Fn+Space`（Ask anything），Windows 為 `Right Alt` / `Right Alt+Right Shift` / `Right Alt+Space`，皆為「點一下開始、再點一下結束」的 toggle；「Windows 按住 Ctrl+Win」是第三方開源仿製品的 issue，不是 Typeless 官方預設。
 2. **Typeless 免費額度**：多個讀取官方用量 API 的第三方工具一致顯示已從 8,000 字/週降為 2,000 字/週（約 2026-09 中旬、2.7.0/2.8.0 前後），新帳號 Pro 試用期實測為 3 天而非 30 天；官方定價頁本次無法直接讀取。
-3. **iOS 鍵盤麥克風**：Apple 現行文件把「No access to microphone and speaker」列在未開 Full Access 的限制清單，開啟 Full Access 的能力清單也**沒有**加入麥克風；多個 2026 年開源專案實測 `AVAudioEngine.start()` 在 extension 內即使有 Full Access 仍失敗。查證者之間對「文件是否絕對禁止」有分歧，但**所有上架產品（Wispr Flow、Typeless、Dictus）都採主 App 錄音**。設計上以主 App 錄音為準，並把「extension 內錄音」列為第 0 週 spike。
+3. **iOS 鍵盤麥克風**：Apple 現行文件把「No access to microphone and speaker」列在未開 Full Access 的限制清單，開啟 Full Access 的能力清單也**沒有**加入麥克風；多個 2026 年開源專案實測 `AVAudioEngine.start()` 在 extension 內即使有 Full Access 仍失敗。查證者之間對「文件是否絕對禁止」有分歧，但**所有上架產品（Wispr Flow、Typeless、Dictus）都採主 App 錄音**。設計上以主 App 錄音為準，並把「extension 內錄音」列為第一週 spike。
 4. **Apple `SpeechTranscriber.supportedLocales`**：Apple 未公布數量；社群實測回傳 30 個 locale（依 OS 版本與裝置約 30–45），**一致包含 zh-TW、zh-CN、zh-HK、yue-CN**。
 5. **Qwen3-ASR**：2026-01-29 以 Apache-2.0 開源 0.6B / 1.7B；1.7B 在 AISHELL-2 WER 2.71（Whisper-large-v3 5.06）；串流推理目前僅支援 vLLM 後端。
 6. **FUTO Voice Input 相容性**：Gboard 與 Samsung Keyboard 的麥克風鍵 hardcoded 不交接第三方；可交接的有 HeliBoard、FlorisBoard、AnySoftKeyboard、Unexpected Keyboard、AOSP Keyboard、Grammarly、SwiftKey。

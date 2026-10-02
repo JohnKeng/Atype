@@ -1,7 +1,7 @@
 # Atype 自用版執行方案（Mac + iPhone）
 
 更新：2026-10-02。範圍：**純自用、不給別人用、暫時只做 macOS 與 iPhone**。
-商用版（多人、五平台、後端、收款、上架）的完整方案保留在 [`design/final-plan-v1.md`](design/final-plan-v1.md) 與其批評／修訂，作為日後擴張的參考；本文件只保留自用需要的部分。
+商用版（多人、五平台、後端、收款、上架）的完整方案保留在 [`design/final-plan-v2.md`](design/final-plan-v2.md)（v1 與其批評在同目錄），作為日後擴張的參考；本文件只保留自用需要的部分。
 
 研究依據：[`research/`](research/README.md) 11 份報告與 [`research/_verification.md`](research/_verification.md)。標 ⚠ 的數字來自二手來源，動手時再核一次。
 
@@ -234,4 +234,4 @@ Apple Foundation Models 離線版：規則縮成 6 行、範例 2 則、詞典 �
 
 ## 8. 日後若要變商品
 
-回到 [`design/final-plan-v1.md`](design/final-plan-v1.md)（及其批評與修訂版）：需要補的是中繼（key 不下發、計量）、收款（Paddle + IAP）、上架（4.4.1 / 5.1.2(i)）、eval CI、Windows / Android。自用版的管線與 prompt 可以原封搬過去。
+回到 [`design/final-plan-v2.md`](design/final-plan-v2.md)：需要補的是中繼（key 不下發、計量）、收款（Paddle + IAP）、上架（4.4.1 / 5.1.2(i)）、eval CI、Windows / Android。自用版的管線與 prompt 可以原封搬過去。
