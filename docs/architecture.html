@@ -1,0 +1,312 @@
+<title>Atype 架構流程圖</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: single reading column, figures full-width inside it, engineering-doc tone */
+  :root {
+    --bg: #f4f6f8;
+    --panel: #ffffff;
+    --fg: #1b2430;
+    --muted: #5a6778;
+    --line: #c7d0db;
+    --accent: #0b7a75;      /* 唯一出網路的那條線 */
+    --accent-bg: #e3f3f1;
+    --warn: #b45309;        /* Apple 的硬限制 */
+    --warn-bg: #fbeedd;
+    --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f141a; --panel: #171d25; --fg: #e4e9ef; --muted: #9aa6b4; --line: #2c3745;
+      --accent: #34d3c6; --accent-bg: #10302e; --warn: #f0a33a; --warn-bg: #3a2a12; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f141a; --panel: #171d25; --fg: #e4e9ef; --muted: #9aa6b4; --line: #2c3745;
+    --accent: #34d3c6; --accent-bg: #10302e; --warn: #f0a33a; --warn-bg: #3a2a12; color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.7; margin: 0; }
+  .wrap { max-width: 920px; margin: 0 auto; padding-block: 40px 72px; padding-inline: 20px; }
+  header h1 { font-size: 28px; font-weight: 700; margin: 0 0 6px; letter-spacing: .01em; text-wrap: balance; }
+  header p.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+  .meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 10px; letter-spacing: .02em; }
+  h2 { font-size: 20px; font-weight: 700; margin: 56px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); text-wrap: balance; }
+  h2 small { font-family: var(--font-mono); font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 10px; letter-spacing: .04em; }
+  p { max-width: 68ch; margin: 0 0 12px; }
+  figure { margin: 18px 0 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px 16px 10px; }
+  .scroll { overflow-x: auto; }
+  figure svg { display: block; width: 100%; height: auto; color: var(--fg); font-family: var(--font-body); }
+  figure svg .mono { font-family: var(--font-mono); }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 72ch; }
+  .key { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+  .key span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 22px; height: 0; border-top: 2px solid currentColor; display: inline-block; }
+  .sw.acc { border-color: var(--accent); }
+  .sw.dash { border-top-style: dashed; }
+  .sw.warn { border-color: var(--warn); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 14px 0 6px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; font-family: var(--font-mono); }
+  td code, p code, li code { font-family: var(--font-mono); font-size: 13px; background: var(--accent-bg); padding: 1px 5px; border-radius: 3px; }
+  .tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 1px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+  .tag.acc { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
+  .tag.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+  ol.steps { padding-left: 0; list-style: none; counter-reset: step; margin: 14px 0 0; display: grid; gap: 10px; }
+  ol.steps li { counter-increment: step; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+  ol.steps li::before { content: counter(step); font-family: var(--font-mono); font-size: 13px; color: var(--accent); border: 1px solid var(--accent); border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; margin-top: 2px; }
+  ol.steps li div { min-width: 0; }
+  ol.steps strong { display: block; font-weight: 700; margin-bottom: 2px; }
+  .callout { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0; max-width: 72ch; }
+  .callout.acc { border-color: var(--accent); background: var(--accent-bg); }
+  footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  footer a, p a { color: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Atype 架構流程圖</h1>
+  <p class="lede">自用版：Mac + iPhone。按住一顆鍵說話，放開就得到可以直接送出的繁體中文。這一頁只畫決策真正會碰到的機制：資料在哪裡流動、哪一步離開裝置、兩端各自怎麼交接。</p>
+  <div class="meta">2026-10-02 · 對應 docs/PLAN.md · 數字標 ⚠ 者為二手來源</div>
+</header>
+
+<h2>1. 整體架構<small>兩台裝置、一條對外的線</small></h2>
+<p>兩端都在裝置內完成錄音與辨識，唯一離開裝置的是「已經轉成繁體的文字」，送到你自己申請 key 的 LLM 服務整理。沒有自家伺服器；詞典與 prompt 用 iCloud Drive 同步。</p>
+<figure>
+  <div class="scroll">
+  <svg viewBox="0 0 860 400" role="img" aria-label="Mac 與 iPhone 各自在裝置內錄音與辨識，只把文字送到 LLM API；詞典與 prompt 經 iCloud Drive 同步，沒有自家伺服器">
+    <defs>
+      <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      <marker id="a1acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--accent)"/></marker>
+    </defs>
+    <!-- LLM API -->
+    <rect x="300" y="18" width="260" height="58" rx="6" fill="none" stroke-width="1.5" style="stroke: var(--accent)"/>
+    <text x="430" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">LLM API（你的 key）</text>
+    <text x="430" y="62" text-anchor="middle" font-size="12" fill="currentColor" class="mono">gemini-3.1-flash-lite 或 claude-haiku-4-5</text>
+
+    <!-- Mac -->
+    <rect x="20" y="130" width="360" height="190" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <text x="36" y="156" font-size="15" font-weight="700" fill="currentColor">Mac</text>
+    <text x="72" y="156" font-size="12" fill="currentColor" class="mono">Handy（Tauri 2 + Rust，之後 fork）</text>
+    <rect x="36" y="172" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="111" y="194" text-anchor="middle" font-size="12" fill="currentColor">熱鍵 Fn 按住 · 錄音 16 kHz</text>
+    <rect x="36" y="214" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="111" y="236" text-anchor="middle" font-size="12" fill="currentColor">本地 STT：SenseVoice / Apple</text>
+    <rect x="36" y="256" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="111" y="278" text-anchor="middle" font-size="12" fill="currentColor">OpenCC → pangu → 標點</text>
+    <rect x="214" y="172" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="289" y="194" text-anchor="middle" font-size="12" fill="currentColor">剪貼簿 + ⌘V 收據式貼上</text>
+    <rect x="214" y="214" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="289" y="236" text-anchor="middle" font-size="12" fill="currentColor">底部 HUD · 本機歷史</text>
+    <rect x="214" y="256" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="289" y="278" text-anchor="middle" font-size="12" fill="currentColor">API key 在 Keychain</text>
+
+    <!-- iPhone -->
+    <rect x="480" y="130" width="360" height="190" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <text x="496" y="156" font-size="15" font-weight="700" fill="currentColor">iPhone</text>
+    <text x="556" y="156" font-size="12" fill="currentColor" class="mono">Swift App（Xcode 直接安裝，不上架）</text>
+    <rect x="496" y="172" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="571" y="194" text-anchor="middle" font-size="12" fill="currentColor">Action Button → 背景錄音</text>
+    <rect x="496" y="214" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="571" y="236" text-anchor="middle" font-size="12" fill="currentColor">本地 STT：SpeechTranscriber</text>
+    <rect x="496" y="256" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="571" y="278" text-anchor="middle" font-size="12" fill="currentColor">OpenCC → pangu → 標點</text>
+    <rect x="674" y="172" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="749" y="194" text-anchor="middle" font-size="12" fill="currentColor">剪貼簿 + Live Activity</text>
+    <rect x="674" y="214" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8" stroke-dasharray="4 3"/>
+    <text x="749" y="236" text-anchor="middle" font-size="12" fill="currentColor">鍵盤 extension（選配）</text>
+    <rect x="674" y="256" width="150" height="34" rx="4" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="749" y="278" text-anchor="middle" font-size="12" fill="currentColor">API key 在 Keychain</text>
+
+    <!-- device -> LLM (text only) -->
+    <line x1="200" y1="130" x2="330" y2="78" stroke-width="2" style="stroke: var(--accent)" marker-end="url(#a1acc)"/>
+    <text x="206" y="98" font-size="12" fill="currentColor" style="fill: var(--accent)">只送文字（HTTPS）</text>
+    <line x1="660" y1="130" x2="530" y2="78" stroke-width="2" style="stroke: var(--accent)" marker-end="url(#a1acc)"/>
+    <text x="548" y="98" font-size="12" fill="currentColor" style="fill: var(--accent)">只送文字（HTTPS）</text>
+    <text x="430" y="118" text-anchor="middle" font-size="12" fill="currentColor" opacity=".75">音訊永不離開裝置（除非你自己切到雲端 STT）</text>
+
+    <!-- iCloud -->
+    <rect x="330" y="350" width="200" height="38" rx="19" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+    <text x="430" y="374" text-anchor="middle" font-size="12" fill="currentColor">iCloud Drive：詞典 + prompt JSON</text>
+    <line x1="200" y1="320" x2="340" y2="356" stroke="currentColor" stroke-dasharray="5 4" marker-end="url(#a1)" marker-start="url(#a1)"/>
+    <line x1="660" y1="320" x2="520" y2="356" stroke="currentColor" stroke-dasharray="5 4" marker-end="url(#a1)" marker-start="url(#a1)"/>
+    <text x="236" y="352" font-size="11" fill="currentColor" opacity=".75">同步</text>
+    <text x="606" y="352" font-size="11" fill="currentColor" opacity=".75">同步</text>
+  </svg>
+  </div>
+  <figcaption>兩端各自完整；彼此不直接通訊。綠線是整個系統唯一出網路的路徑，而且只載文字。</figcaption>
+  <div class="key"><span><i class="sw acc"></i>出網路（文字）</span><span><i class="sw"></i>裝置內</span><span><i class="sw dash"></i>同步 / 選配</span></div>
+</figure>
+
+<h2>2. 共用管線<small>兩端相同的七個階段</small></h2>
+<p>Mac 與 iPhone 跑的是同一條管線，差別只在「熱鍵」與「貼上」兩端的平台 API。繁體與排版由確定性規則保證，LLM 只負責需要語意判斷的事（贅詞、自我更正、分段），而且逾時就跳過。</p>
+<figure>
+  <div class="scroll">
+  <svg viewBox="0 0 920 190" role="img" aria-label="七階段管線：熱鍵、錄音、本地辨識、OpenCC 繁體化、LLM 整理（唯一出網路，逾時可跳過）、pangu 空格與全形標點、貼上">
+    <defs>
+      <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+    </defs>
+    <!-- boxes: x = 20 + i*128, w=104 -->
+    <g font-size="12" fill="currentColor">
+      <rect x="20" y="60" width="104" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="72" y="83" text-anchor="middle" font-weight="700">1 熱鍵</text><text x="72" y="101" text-anchor="middle">Fn 按住 / 放開</text>
+      <rect x="148" y="60" width="104" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="200" y="83" text-anchor="middle" font-weight="700">2 錄音</text><text x="200" y="101" text-anchor="middle">16 kHz mono + VAD</text>
+      <rect x="276" y="60" width="104" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="328" y="83" text-anchor="middle" font-weight="700">3 本地 STT</text><text x="328" y="101" text-anchor="middle">SenseVoice / Apple</text>
+      <rect x="404" y="60" width="104" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="456" y="83" text-anchor="middle" font-weight="700">4 OpenCC</text><text x="456" y="101" text-anchor="middle">s2twp 繁體化</text>
+      <rect x="532" y="60" width="104" height="56" rx="5" fill="none" stroke-width="2" style="stroke: var(--accent)"/>
+      <text x="584" y="83" text-anchor="middle" font-weight="700">5 LLM 整理</text><text x="584" y="101" text-anchor="middle">贅詞 / 更正 / 分段</text>
+      <rect x="660" y="60" width="104" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="712" y="83" text-anchor="middle" font-weight="700">6 排版</text><text x="712" y="101" text-anchor="middle">pangu 空格 · 全形標點</text>
+      <rect x="788" y="60" width="104" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="840" y="83" text-anchor="middle" font-weight="700">7 貼上</text><text x="840" y="101" text-anchor="middle">⌘V / 剪貼簿 / insertText</text>
+    </g>
+    <g stroke="currentColor" stroke-width="1.5" marker-end="url(#a2)">
+      <line x1="124" y1="88" x2="146" y2="88"/><line x1="252" y1="88" x2="274" y2="88"/><line x1="380" y1="88" x2="402" y2="88"/>
+      <line x1="508" y1="88" x2="530" y2="88"/><line x1="636" y1="88" x2="658" y2="88"/><line x1="764" y1="88" x2="786" y2="88"/>
+    </g>
+    <!-- bypass arrow for LLM timeout: from box4 bottom to box6 bottom -->
+    <path d="M456,116 L456,150 L712,150 L712,118" fill="none" stroke="currentColor" stroke-dasharray="5 4" stroke-width="1.5" marker-end="url(#a2)"/>
+    <text x="584" y="168" text-anchor="middle" font-size="12" fill="currentColor">LLM 逾時 2.5 s 或失敗 → 跳過，貼確定性結果</text>
+    <!-- annotations above -->
+    <text x="200" y="40" text-anchor="middle" font-size="11" fill="currentColor" opacity=".75" class="mono">邊說邊辨識，放開只剩尾段</text>
+    <text x="584" y="40" text-anchor="middle" font-size="11" class="mono" style="fill: var(--accent)">唯一出網路 · 約 0.5–1.5 s</text>
+    <text x="840" y="40" text-anchor="middle" font-size="11" fill="currentColor" opacity=".75" class="mono">一次貼上，不逐字串流</text>
+    <!-- device-local bracket -->
+    <line x1="20" y1="22" x2="508" y2="22" stroke="currentColor" opacity=".5"/><line x1="660" y1="22" x2="892" y2="22" stroke="currentColor" opacity=".5"/>
+    <text x="264" y="14" text-anchor="middle" font-size="11" fill="currentColor" opacity=".75">裝置內</text>
+    <text x="776" y="14" text-anchor="middle" font-size="11" fill="currentColor" opacity=".75">裝置內</text>
+  </svg>
+  </div>
+  <figcaption>第 4 與第 6 步是「繁體保證」的來源：就算第 5 步的 LLM 吐出簡體或被跳過，輸出仍是台灣正體、中英之間有空格、全形標點。</figcaption>
+</figure>
+
+<h2>3. Mac 流程<small>Handy 已經做好的部分 vs 你要接的部分</small></h2>
+<p>Handy 負責熱鍵、錄音、HUD、可靠貼上與歷史；你只需要選模型、填 LLM key、貼 prompt。之後 fork 時要改的四處是：Apple <code>SpeechTranscriber</code> 引擎、Claude Messages API、OpenCC 後置與 pangu、拼音詞典。</p>
+<figure>
+  <div class="scroll">
+  <svg viewBox="0 0 860 340" role="img" aria-label="Mac 時序：按住 Fn 開始錄音並串流給本地辨識，放開後取尾段，OpenCC 後的文字送 LLM，回來後以剪貼簿加 Command V 貼進前景 App，收到讀取回執再還原剪貼簿">
+    <defs>
+      <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      <marker id="a3acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--accent)"/></marker>
+    </defs>
+    <!-- lanes -->
+    <g font-size="13" font-weight="700" fill="currentColor" text-anchor="middle">
+      <text x="80" y="24">你</text><text x="250" y="24">Handy</text><text x="430" y="24">本地 STT</text><text x="610" y="24">LLM API</text><text x="780" y="24">前景 App</text>
+    </g>
+    <g font-size="11" fill="currentColor" opacity=".7" text-anchor="middle" class="mono">
+      <text x="250" y="40">Rust 核心 + HUD</text><text x="430" y="40">SenseVoice / Apple</text><text x="610" y="40">Gemini / Claude</text><text x="780" y="40">LINE · Slack · 編輯器</text>
+    </g>
+    <g stroke="currentColor" stroke-dasharray="3 4" opacity=".5">
+      <line x1="80" y1="48" x2="80" y2="320"/><line x1="250" y1="48" x2="250" y2="320"/><line x1="430" y1="48" x2="430" y2="320"/><line x1="610" y1="48" x2="610" y2="320"/><line x1="780" y1="48" x2="780" y2="320"/>
+    </g>
+    <g font-size="12" fill="currentColor">
+      <line x1="80" y1="70" x2="248" y2="70" stroke="currentColor" stroke-width="1.5" marker-end="url(#a3)"/><text x="165" y="64" text-anchor="middle">按住 Fn（HUD 亮起）</text>
+      <line x1="250" y1="100" x2="428" y2="100" stroke="currentColor" stroke-width="1.5" marker-end="url(#a3)"/><text x="340" y="94" text-anchor="middle">PCM 16 kHz 邊說邊送</text>
+      <line x1="430" y1="128" x2="252" y2="128" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a3)"/><text x="340" y="122" text-anchor="middle">partial 文字（只給 HUD 預覽）</text>
+      <line x1="80" y1="158" x2="248" y2="158" stroke="currentColor" stroke-width="1.5" marker-end="url(#a3)"/><text x="165" y="152" text-anchor="middle">放開 Fn</text>
+      <line x1="430" y1="186" x2="252" y2="186" stroke="currentColor" stroke-width="1.5" marker-end="url(#a3)"/><text x="340" y="180" text-anchor="middle">final（尾段 ≤ 0.4 s）→ OpenCC</text>
+      <line x1="250" y1="216" x2="608" y2="216" stroke-width="2" style="stroke: var(--accent)" marker-end="url(#a3acc)"/><text x="430" y="210" text-anchor="middle" style="fill: var(--accent)">HTTPS：繁體文字 + 詞典 + prompt</text>
+      <line x1="610" y1="246" x2="252" y2="246" stroke-width="2" style="stroke: var(--accent)" marker-end="url(#a3acc)"/><text x="430" y="240" text-anchor="middle" style="fill: var(--accent)">整理後文字（逾時 2.5 s → 用原文）</text>
+      <line x1="250" y1="276" x2="778" y2="276" stroke="currentColor" stroke-width="1.5" marker-end="url(#a3)"/><text x="514" y="270" text-anchor="middle">pangu / 標點 → 寫剪貼簿 → 送 ⌘V</text>
+      <line x1="780" y1="304" x2="252" y2="304" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a3)"/><text x="514" y="298" text-anchor="middle">讀取回執 → 還原你原本的剪貼簿 · HUD ✓ · 存歷史</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>關鍵細節在最後兩步：Handy 用「剪貼簿讀取回執」決定何時還原剪貼簿，避免貼到舊內容；若貼上失敗，文字仍留在剪貼簿並可從歷史重貼。</figcaption>
+</figure>
+
+<h2>4. iPhone 流程<small>為什麼主入口是 Action Button，不是鍵盤</small></h2>
+<div class="callout"><strong>Apple 的硬限制：</strong>iOS 鍵盤 extension 不能存取麥克風（開 Full Access 也不行），記憶體上限約 30–60 MB。所以錄音與辨識一定在主 App，鍵盤最多只能「插字」。自用最省事的做法是完全不經鍵盤：Action Button 錄音 → 文字進剪貼簿 → 長按貼上。</div>
+<figure>
+  <div class="scroll">
+  <svg viewBox="0 0 860 400" role="img" aria-label="iPhone 時序：按住 Action Button 觸發 AudioRecordingIntent，主 App 在背景錄音並顯示 Live Activity，本地 SpeechTranscriber 辨識，文字送 LLM 整理後寫入剪貼簿；選配的鍵盤 extension 經 App Group 收到文字後插入；鍵盤本身不能錄音">
+    <defs>
+      <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      <marker id="a4acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--accent)"/></marker>
+    </defs>
+    <g font-size="13" font-weight="700" fill="currentColor" text-anchor="middle">
+      <text x="70" y="24">你</text><text x="230" y="24">iOS 系統</text><text x="400" y="24">Atype App</text><text x="580" y="24">LLM API</text><text x="760" y="24">目標 App</text>
+    </g>
+    <g font-size="11" fill="currentColor" opacity=".7" text-anchor="middle" class="mono">
+      <text x="230" y="40">Action Button · Live Activity</text><text x="400" y="40">背景錄音 + SpeechTranscriber</text><text x="580" y="40">Gemini / Claude</text><text x="760" y="40">LINE · Notes · Safari</text>
+    </g>
+    <g stroke="currentColor" stroke-dasharray="3 4" opacity=".5">
+      <line x1="70" y1="48" x2="70" y2="300"/><line x1="230" y1="48" x2="230" y2="300"/><line x1="400" y1="48" x2="400" y2="300"/><line x1="580" y1="48" x2="580" y2="300"/><line x1="760" y1="48" x2="760" y2="300"/>
+    </g>
+    <g font-size="12" fill="currentColor">
+      <line x1="70" y1="70" x2="228" y2="70" stroke="currentColor" stroke-width="1.5" marker-end="url(#a4)"/><text x="150" y="64" text-anchor="middle">按住 Action Button</text>
+      <line x1="230" y1="98" x2="398" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#a4)"/><text x="315" y="92" text-anchor="middle">AudioRecordingIntent（背景啟動）</text>
+      <line x1="400" y1="126" x2="232" y2="126" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a4)"/><text x="315" y="120" text-anchor="middle">啟動 Live Activity（必要，否則錄音被停）</text>
+      <rect x="320" y="142" width="160" height="26" rx="4" fill="none" stroke="currentColor"/><text x="400" y="159" text-anchor="middle">本地辨識 zh_TW（邊說邊轉）</text>
+      <line x1="70" y1="190" x2="228" y2="190" stroke="currentColor" stroke-width="1.5" marker-end="url(#a4)"/><text x="150" y="184" text-anchor="middle">放開</text>
+      <line x1="400" y1="218" x2="578" y2="218" stroke-width="2" style="stroke: var(--accent)" marker-end="url(#a4acc)"/><text x="490" y="212" text-anchor="middle" style="fill: var(--accent)">HTTPS：繁體文字 + 詞典</text>
+      <line x1="580" y1="246" x2="402" y2="246" stroke-width="2" style="stroke: var(--accent)" marker-end="url(#a4acc)"/><text x="490" y="240" text-anchor="middle" style="fill: var(--accent)">整理後文字（離線時改用 Apple 本地模型）</text>
+      <line x1="400" y1="276" x2="758" y2="276" stroke="currentColor" stroke-width="1.5" marker-end="url(#a4)"/><text x="580" y="270" text-anchor="middle">寫入剪貼簿 · Live Activity 顯示「已複製」→ 你長按貼上</text>
+    </g>
+    <!-- optional keyboard path -->
+    <rect x="20" y="318" width="820" height="66" rx="6" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+    <text x="34" y="340" font-size="12" font-weight="700" fill="currentColor">選配：鍵盤 extension（第 4 週）</text>
+    <text x="34" y="362" font-size="12" fill="currentColor">鍵盤的麥克風鍵 → 開主 App 錄音 → 你滑回原 App → 主 App 把文字寫進 App Group 並送 Darwin notification → 鍵盤 insertText</text>
+    <!-- struck arrow -->
+    <line x1="560" y1="338" x2="690" y2="338" stroke-width="2" style="stroke: var(--warn)" marker-end="url(#a4)"/>
+    <line x1="618" y1="328" x2="632" y2="348" stroke-width="2.5" style="stroke: var(--warn)"/>
+    <text x="700" y="342" font-size="12" style="fill: var(--warn)">鍵盤 → 麥克風：不可能</text>
+  </svg>
+  </div>
+  <figcaption>Action Button 路線零 App 切換、不需第三方鍵盤。鍵盤版多一次「跳主 App 再滑回來」，是所有 iOS 聽寫鍵盤（Wispr Flow、Typeless、Dictus）共同的摩擦，不是我們能解的。</figcaption>
+</figure>
+
+<h2>5. 模型分層<small>本地優先，雲端只做整理</small></h2>
+<p>自用時成本不是問題，選的是品質與「音訊不出裝置」。辨識全部本地；整理用雲端 LLM，兩家都申請 key，用 50 句自己的測試句比一週再定。</p>
+<table>
+  <thead><tr><th>層</th><th>Mac</th><th>iPhone</th><th>為什麼</th></tr></thead>
+  <tbody>
+    <tr><td>辨識（STT）</td><td>SenseVoice-Small（阿里開源，ONNX，CPU 即時）或 macOS 26+ Apple <code>SpeechTranscriber</code> zh_TW</td><td>Apple <code>SpeechTranscriber</code> zh_TW（iOS 26+）</td><td>零成本、音訊不出機；SenseVoice 中文基準最準但以簡體語料訓練，靠 OpenCC 轉；Apple 原生零下載、輸出就是繁體。Whisper 簡繁混出、Parakeet 無中文，不用</td></tr>
+    <tr><td>繁體 / 排版</td><td colspan="2">OpenCC s2twp → pangu 中英空格 → 全形標點（確定性規則，LLM 前後各跑一次）</td><td>這是「簡體 0」的真正保證，不靠 LLM 記得</td></tr>
+    <tr><td>整理（LLM）<span class="tag acc" style="margin-left:6px">出網路</span></td><td colspan="2"><code>gemini-3.1-flash-lite</code>（最便宜最快）或 <code>claude-haiku-4-5</code>（指令遵守與防注入最穩）；離線時 Apple Foundation Models（iOS/macOS 26+，4,096 token）</td><td>一個人每月約 US$0.5–2 ⚠；Gemini 2.5 Flash-Lite 將於 2026-10-16 關閉，不要接舊版</td></tr>
+    <tr><td>雲端辨識（選配）</td><td colspan="2">ElevenLabs Scribe v2 Realtime，自己的 key</td><td>只有安靜環境仍不準時才考慮；普通話 CER 商用最佳 ⚠，約 US$0.39/小時</td></tr>
+  </tbody>
+</table>
+
+<h2>6. 第 0 天：不寫程式先用起來<small>Mac 約 30 分鐘</small></h2>
+<ol class="steps">
+  <li><div><strong>裝 Handy，授權麥克風與輔助使用</strong><code>brew install --cask handy</code> 或從 GitHub 下載。重 build 或改簽章後輔助使用授權會「看似有效實則失效」，這是 Handy 已知行為，重新加入即可。</div></li>
+  <li><div><strong>模型選 SenseVoice-Small</strong>在 Handy 的模型清單下載。不要選 Parakeet（沒有中文）或 Whisper turbo（簡繁混出、幻覺多）。</div></li>
+  <li><div><strong>熱鍵設 Fn 按住</strong>若「系統設定 → 鍵盤 → 按下 🌐 鍵時」是「開始聽寫」，改成「不執行任何操作」，否則系統會先攔走 Fn。外接非 Apple 鍵盤沒有 Fn 事件，改 Right Option。</div></li>
+  <li><div><strong>後處理接自己的 LLM key</strong>Gemini 用 OpenAI 相容端點 <code>https://generativelanguage.googleapis.com/v1beta/openai/</code>、model <code>gemini-3.1-flash-lite</code>；Claude 若 Handy 現版無法直接接，就等第 3 週 fork 時接 Messages API。</div></li>
+  <li><div><strong>貼 zh-TW prompt、開 OpenCC、填詞典</strong>prompt 在 <code>docs/PLAN.md</code> §4.2：「你是文字濾鏡，不是助理」開頭，含繁體、中英空格、自我更正、注入防護規則與範例。</div></li>
+  <li><div><strong>iPhone 先用捷徑頂著</strong>「聽寫文字」→ POST 到 LLM API → 拷貝到剪貼簿，綁 Action Button。第 2 週再換成自己的 App。</div></li>
+</ol>
+
+<h2>7. 四週計畫<small>一個人、業餘時間</small></h2>
+<figure>
+  <div class="scroll">
+  <svg viewBox="0 0 900 150" role="img" aria-label="四週時程：第一週 Mac 零程式碼版本與測試句，第二週 iPhone App v0，第三週 fork Handy，第四週選配鍵盤 extension">
+    <g font-size="12" fill="currentColor">
+      <rect x="20" y="40" width="200" height="60" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="32" y="62" font-weight="700">W1 · Mac 用起來</text><text x="32" y="82">Handy + SenseVoice + LLM key</text><text x="32" y="96" opacity=".75">50 句測試句比兩家 LLM</text>
+      <rect x="240" y="40" width="200" height="60" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="252" y="62" font-weight="700">W2 · iPhone App v0</text><text x="252" y="82">SpeechTranscriber + LLM + 剪貼簿</text><text x="252" y="96" opacity=".75">Action Button + Live Activity</text>
+      <rect x="460" y="40" width="200" height="60" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="472" y="62" font-weight="700">W3 · fork Handy</text><text x="472" y="82">Apple 引擎 · Claude API · 詞典</text><text x="472" y="96" opacity=".75">iCloud 同步詞典與 prompt</text>
+      <rect x="680" y="40" width="200" height="60" rx="5" fill="none" stroke="currentColor" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <text x="692" y="62" font-weight="700">W4 · 鍵盤（選配）</text><text x="692" y="82">Dictus 模板：App Group 交接</text><text x="692" y="96" opacity=".75">離線改走 Apple 本地模型</text>
+    </g>
+    <line x1="20" y1="120" x2="880" y2="120" stroke="currentColor" opacity=".5"/>
+    <g font-size="11" fill="currentColor" opacity=".75" class="mono" text-anchor="middle">
+      <text x="120" y="140">Day 0 即可用</text><text x="340" y="140">需 Xcode + iPhone</text><text x="560" y="140">需 Rust / Swift</text><text x="780" y="140">可以不做</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>第一週結束時 Mac 端已經每天在用；之後三週都是在「更準、更順手」上加碼，沒有一週是阻塞另一週的。</figcaption>
+</figure>
+
+<div class="callout acc"><strong>不做的事：</strong>後端、帳號、收費、上架與審查、Windows / Android、串流逐字寫進目標 App、iOS 自動跳回原 App 或任何私有 API、自己訓練辨識模型。</div>
+
+<footer>
+  細節與程式片段：<code>docs/PLAN.md</code>（自用版）、<code>docs/design/final-plan-v2.md</code>（商用版參考）、<code>docs/research/</code>（11 份研究與查證）。研究環境無法開啟多數商業網站，價格與延遲數字部分為二手來源，動手時再核一次。
+</footer>
+</div>

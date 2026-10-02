@@ -11,6 +11,7 @@
 | 想知道 | 讀這份 |
 |---|---|
 | **自用版要怎麼做**（Mac 用 Handy 起手、iPhone 小 App + Action Button、模型選擇、四週計畫） | [`docs/PLAN.md`](docs/PLAN.md) |
+| 先看圖：整體架構、共用管線、Mac / iPhone 時序、模型分層、四週時程 | [`docs/architecture.html`](docs/architecture.html) |
 | 商用版（五平台、後端、收款、上架、12 週計畫、成本、風險） | [`docs/design/final-plan-v2.md`](docs/design/final-plan-v2.md)（v1 與其批評也在同目錄） |
 | 為什麼這樣選（11 份研究報告，含原始碼級細節與來源 URL） | [`docs/research/README.md`](docs/research/README.md) |
 | 關鍵主張有沒有被查證、哪些被修正 | [`docs/research/_verification.md`](docs/research/_verification.md) |
