@@ -4,17 +4,26 @@
 
 這是一個「自製 Typeless」的專案。目前 repo 只有**研究與可執行方案**，還沒有程式碼；方案以 2026-10-02 的事實為準，所有無法用一手來源核實的數字都標 ⚠。
 
+**目前範圍：純自用、只做 Mac + iPhone**（2026-10-02 決定）。主方案是 [`docs/PLAN.md`](docs/PLAN.md)（自用版：無後端、無收費、不上架、四週）；下方「十句話結論」與 `docs/design/` 裡的是原本的商用五平台版本，留作日後擴張參考。
+
 ## 從哪裡開始讀
 
 | 想知道 | 讀這份 |
 |---|---|
-| 最終要怎麼做（架構、選型、12 週計畫、成本、風險、第一週任務） | [`docs/PLAN.md`](docs/PLAN.md) |
+| **自用版要怎麼做**（Mac 用 Handy 起手、iPhone 小 App + Action Button、模型選擇、四週計畫） | [`docs/PLAN.md`](docs/PLAN.md) |
+| 商用版（五平台、後端、收款、上架、12 週計畫、成本、風險） | [`docs/design/final-plan-v1.md`](docs/design/final-plan-v1.md) 與其批評／修訂 |
 | 為什麼這樣選（11 份研究報告，含原始碼級細節與來源 URL） | [`docs/research/README.md`](docs/research/README.md) |
 | 關鍵主張有沒有被查證、哪些被修正 | [`docs/research/_verification.md`](docs/research/_verification.md) |
 | 三條路線（MVP-first / Local-first / Quality-first）各自長什麼樣、評審怎麼打分 | [`docs/design/`](docs/design/) |
 | 第一版方案被挑出哪些問題、第二版怎麼改 | [`docs/design/_critique-of-plan-v1.md`](docs/design/_critique-of-plan-v1.md)、`docs/PLAN.md` 末尾的變更紀錄 |
 
-## 十句話版本的結論
+## 自用版結論（Mac + iPhone）
+
+- **Mac 第 0 天不用寫程式**：裝 Handy（MIT）→ 本地引擎選 SenseVoice-Small（阿里開源中文模型，ONNX 在 Mac CPU 跑）→ 後處理接自己的 Gemini 3.1 Flash-Lite 或 Claude Haiku 4.5 key → 貼 zh-TW prompt → 開 OpenCC。之後再 fork 加 macOS 26+ 的 Apple `SpeechTranscriber` 與拼音詞典。
+- **iPhone 要寫一個小 Swift App 但不上架**：Action Button → 主 App 錄音 → `SpeechTranscriber(zh_TW)` → LLM → 剪貼簿；鍵盤 extension 選配（Dictus MIT 模板）。花 US$99 開發者帳號讓簽章一年有效。
+- **不做**：後端、收費、審查、Windows / Android / Linux。一個人每月 LLM 費用約 US$0.5–2。
+
+## 商用版十句話結論（參考）
 
 1. **骨架：薄客戶端 + 胖後端。** 桌機 fork MIT 授權的 [Handy](https://github.com/cjpais/Handy)（Tauri 2 + Rust）當殼，全域熱鍵、收據式剪貼簿貼上、Secure Input 處理、三平台打包全部繼承；所有「智慧」（STT 代理、LLM 清理、繁體正規化、詞典、計量）集中在一個 Cloudflare Worker + Durable Object。
 2. **手機一定是原生薄客戶端。** iOS 鍵盤 extension 不能錄音、記憶體上限約 30–60 MB，所以鍵盤只做 `insertText`，錄音與辨識在主 App，透過 App Group + Darwin notification 交接；Android 做成 `imeSubtypeMode="voice"` 的輔助語音 IME。Tauri 做不了這兩件事。
