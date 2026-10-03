@@ -2,7 +2,7 @@
 
 **按住一顆鍵說話，放開就得到可以直接送出的繁體中文——中英夾雜不翻譯、不出簡體、不改你的意思。** 桌機（macOS / Windows，之後 Linux）與手機（iOS / Android）同一個帳號、同一本詞典。
 
-這是一個「自製 Typeless」的專案。目前 repo 只有**研究與可執行方案**，還沒有程式碼；方案以 2026-10-02 的事實為準，所有無法用一手來源核實的數字都標 ⚠。
+這是一個「自製 Typeless」的專案。repo 裡有**研究與可執行方案**，以及 Mac 版的程式碼骨架（`apps/mac`，Handy v0.9.8 的 fork）；方案以 2026-10-02 的事實為準，所有無法用一手來源核實的數字都標 ⚠。
 
 **目前範圍：純自用、只做 Mac + iPhone**（2026-10-02 決定）。主方案是 [`docs/PLAN.md`](docs/PLAN.md)（自用版：無後端、無收費、不上架、四週）；下方「十句話結論」與 `docs/design/` 裡的是原本的商用五平台版本，留作日後擴張參考。
 
@@ -11,6 +11,7 @@
 | 想知道 | 讀這份 |
 |---|---|
 | **自用版要怎麼做**（Mac 用 Handy 起手、iPhone 小 App + Action Button、模型選擇、四週計畫） | [`docs/PLAN.md`](docs/PLAN.md) |
+| **Mac 版程式碼**：Handy fork 剔除了什麼、改了什麼、怎麼建置、怎麼跟上游 | [`apps/mac/README.md`](apps/mac/README.md) |
 | 先看圖：整體架構、共用管線、Mac / iPhone 時序、模型分層、四週時程 | [`docs/architecture.html`](docs/architecture.html) |
 | 商用版（五平台、後端、收款、上架、12 週計畫、成本、風險） | [`docs/design/final-plan-v2.md`](docs/design/final-plan-v2.md)（v1 與其批評也在同目錄） |
 | 為什麼這樣選（11 份研究報告，含原始碼級細節與來源 URL） | [`docs/research/README.md`](docs/research/README.md) |

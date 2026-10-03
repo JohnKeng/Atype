@@ -1170,6 +1170,9 @@ impl ModelManager {
                 .then(b.speed_score.total_cmp(&a.speed_score))
                 .then_with(|| a.name.cmp(&b.name))
         });
+        // Atype: keep only Chinese-capable models (plus anything already on disk),
+        // mark our own recommendation, and put them in our preferred order.
+        crate::atype::shape_model_list(&mut list);
         list
     }
 

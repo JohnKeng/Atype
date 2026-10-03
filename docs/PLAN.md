@@ -36,7 +36,7 @@ Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好�
    - Gemini：`https://generativelanguage.googleapis.com/v1beta/openai/`，model `gemini-3.1-flash-lite`（2.5 Flash-Lite 於 2026-10-16 關閉，不要用）
    - Claude：Anthropic 有 OpenAI 相容端點 ⚠（若 Handy 版本不支援，改用 §2 的 fork 直接接 Messages API），model `claude-haiku-4-5`
    - Prompt 貼 §4 的 zh-TW 版本。
-5. **繁簡轉換**：Advanced（進階）→「繁簡轉換」選「繁體」。v0.9.8（2026-10-03）起這是獨立於辨識語言的設定，系統語系是 zh-TW 時預設就是繁體；它用 OpenCC `s2tw` 只轉字、不轉台灣用語，所以「軟件 → 軟體」這類仍靠 prompt 或 §2 fork 的 `s2twp` 後置。
+5. **繁簡轉換**：Advanced（進階）→「繁簡轉換」選「繁體」。（若直接 build `apps/mac` 的 Atype，這一步與第 4 步的 prompt 都已是預設。）v0.9.8（2026-10-03）起這是獨立於辨識語言的設定，系統語系是 zh-TW 時預設就是繁體；它用 OpenCC `s2tw` 只轉字、不轉台灣用語，所以「軟件 → 軟體」這類仍靠 prompt 或 §2 fork 的 `s2twp` 後置。
 6. 填入個人詞典（Handy v0.9.6 起自訂詞彙不限空白，但它的模糊比對只支援 ASCII；中文詞條靠 prompt 的 `<known_terms>` 區塊）。
 
 這一步做完，Mac 端的體驗已經接近 Typeless：按住 Fn 說「幫我跟 team 說一下 PR 我已經 merge 了然後 staging 的 API 大概十分鐘後會 deploy 完」，放開後貼出「幫我跟 team 說一下，PR 我已經 merge 了，staging 的 API 大概 10 分鐘後會 deploy 完。」
@@ -68,10 +68,13 @@ Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好�
 
 ### 2.1 建置
 
+fork 已經在這個 repo 的 [`apps/mac`](../apps/mac/README.md)：Handy v0.9.8 用 `git subtree` 匯入，剔除了 24 個介面語言、Windows / Linux 打包、自動更新（原本會從上游 Releases 把 fork 蓋回 Handy）、上游 CI / Nix / 測試 / 贊助素材，並套上 Atype 預設：中文模型白名單（SenseVoice Small 推薦）、供應商只留 Gemini / Anthropic / Groq / Apple Intelligence / Custom、預設 prompt 為 §4.2、繁簡轉換預設繁體。刪了什麼、改了什麼、怎麼跟上游，都在該目錄的 README。
+
 ```bash
-git clone https://github.com/cjpais/Handy atype-mac && cd atype-mac
-git checkout v0.9.8
-rustup update stable && npm i && npm run tauri dev      # 先確認原版在 macOS 27 能跑、Fn 與貼上正常
+cd apps/mac
+bun install && bun run tauri dev      # 先確認在 macOS 27 能跑、Fn 與貼上正常
+bun run tauri build                   # Atype.app / .dmg
+# 跟上游：git subtree pull --prefix=apps/mac https://github.com/cjpais/Handy v0.9.9 --squash
 ```
 
 Handy 目前鎖 `tauri = "2.11.5"`、`tauri-nspanel` 走 git branch `v2.1`；先在這個版本上改，不要急著升 Tauri 2.12。簽章：自用可以 ad-hoc，但每次重 build 後 Accessibility 授權會「看似有效實則失效」（`AXIsProcessTrusted()` 回 true 但 tap 已死），用固定的 Developer ID 或自簽憑證簽章可避免每次重授權。
@@ -185,7 +188,7 @@ Info.plist：`NSMicrophoneUsageDescription`、`UIBackgroundModes = [audio]`、UR
 
 | 層 | 預設 | 備選 | 說明 |
 |---|---|---|---|
-| STT（Mac） | SenseVoice-Small（Handy 內建）或 Apple `SpeechTranscriber` zh_TW（§2.2a） | ElevenLabs Scribe v2 Realtime（自己的 key，普通話 CER 5.24% 商用最佳 ⚠） | 本地零成本且音訊不出機器；只有在安靜環境仍不準時才上雲 |
+| STT（Mac） | SenseVoice Small **GGUF**（Handy v0.9.8 目錄內建，Q8_0 約 240 MB，transcribe-cpp + Metal）；A/B 對象 Qwen3-ASR 0.6B GGUF（同目錄，30 語、Q8_0 約 811 MB）；之後加 Apple `SpeechTranscriber` zh_TW（§2.2a） | ElevenLabs Scribe v2 Realtime（自己的 key，普通話 CER 5.24% 商用最佳 ⚠） | 本地零成本且音訊不出機器；只有在安靜環境仍不準時才上雲 |
 | STT（iPhone） | Apple `SpeechTranscriber` zh_TW | 雲端（同上） | iPhone 不要跑第三方模型（體積、耗電） |
 | LLM 整理 | `gemini-3.1-flash-lite`（$0.25 / $1.50 per MTok，最快最便宜）或 `claude-haiku-4-5`（$1 / $5，指令遵守與防注入最穩） | Groq gpt-oss-20b（TTFT 0.1–0.3 s）；Apple Foundation Models（離線） | 兩家都申請 key，用 §5 測試句比一週：簡體 0、注入通過、延遲、改錯意思的次數 |
 | 繁簡 / 排版 | OpenCC s2twp + pangu + 全形標點（確定性） | — | 不靠 LLM「記得」 |

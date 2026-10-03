@@ -2,7 +2,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug, Clone, Default)]
-#[command(name = "handy", about = "Handy - Speech to Text")]
+#[command(name = "atype", about = "Atype - speech to text (Handy fork)")]
 pub struct CliArgs {
     /// Start with the main window hidden
     #[arg(long)]
