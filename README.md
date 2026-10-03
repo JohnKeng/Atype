@@ -20,7 +20,7 @@
 
 ## 自用版結論（Mac + iPhone）
 
-- **Mac 第 0 天不用寫程式**：裝 Handy（MIT）→ 本地引擎選 SenseVoice-Small（阿里開源中文模型，ONNX 在 Mac CPU 跑）→ 後處理接自己的 Gemini 3.1 Flash-Lite 或 Claude Haiku 4.5 key → 貼 zh-TW prompt → 開 OpenCC。之後再 fork 加 macOS 26+ 的 Apple `SpeechTranscriber` 與拼音詞典。
+- **Mac 第 0 天不用寫程式**：裝 Handy（MIT）→ 本地引擎選 SenseVoice-Small（阿里開源中文模型，ONNX 在 Mac CPU 跑）→ 後處理接自己的 Gemini 3.1 Flash-Lite 或 Claude Haiku 4.5 key → 貼 zh-TW prompt → 繁簡轉換選繁體。之後再 fork 加 macOS 26+ 的 Apple `SpeechTranscriber` 與拼音詞典。
 - **iPhone 要寫一個小 Swift App 但不上架**：Action Button → 主 App 錄音 → `SpeechTranscriber(zh_TW)` → LLM → 剪貼簿；鍵盤 extension 選配（Dictus MIT 模板）。花 US$99 開發者帳號讓簽章一年有效。
 - **不做**：後端、收費、審查、Windows / Android / Linux。一個人每月 LLM 費用約 US$0.5–2。
 
@@ -48,7 +48,7 @@
 自用版詳見 `docs/PLAN.md` 第 1 節與第 6 節；商用版的完整第一週清單在 `docs/design/final-plan-v2.md` 第 12 節。濃縮版：
 
 1. 開帳號與金鑰：Apple Developer、Cloudflare Workers Paid、Supabase（Tokyo）、Anthropic / ElevenLabs / Deepgram / Azure Speech、Paddle 與備案 MoR 的賣家 KYC、Azure Trusted Signing 身分驗證試開。
-2. `git subtree add` Handy v0.9.7 到 `apps/desktop`，先確認原版在 macOS 27 能跑；開 Worker 骨架與 Supabase migrations。
+2. `git subtree add` Handy v0.9.8 到 `apps/desktop`，先確認原版在 macOS 27 能跑；開 Worker 骨架與 Supabase migrations。
 3. 錄 2 位講者 × 40 句的台灣口音黃金測試集（含中英夾雜、贅詞、自我更正、數字、注入攻擊），跑 STT 與 LLM bake-off。
 4. iOS 真機 spike（iOS 27 + 26）：鍵盤 → 主 App → App Group → 插字的 round-trip、無 Full Access 的行為、`SpeechTranscriber.supportedLocales`、背景錄音存活、Action Button 入口。
 5. macOS spike：Default `flagsChanged` CGEventTap 在 macOS 27 的授權歸屬；Developer ID 簽章 + 公證走通。

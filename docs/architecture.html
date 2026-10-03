@@ -277,7 +277,7 @@
   <li><div><strong>模型選 SenseVoice-Small</strong>在 Handy 的模型清單下載。不要選 Parakeet（沒有中文）或 Whisper turbo（簡繁混出、幻覺多）。</div></li>
   <li><div><strong>熱鍵設 Fn 按住</strong>若「系統設定 → 鍵盤 → 按下 🌐 鍵時」是「開始聽寫」，改成「不執行任何操作」，否則系統會先攔走 Fn。外接非 Apple 鍵盤沒有 Fn 事件，改 Right Option。</div></li>
   <li><div><strong>後處理接自己的 LLM key</strong>Gemini 用 OpenAI 相容端點 <code>https://generativelanguage.googleapis.com/v1beta/openai/</code>、model <code>gemini-3.1-flash-lite</code>；Claude 若 Handy 現版無法直接接，就等第 3 週 fork 時接 Messages API。</div></li>
-  <li><div><strong>貼 zh-TW prompt、開 OpenCC、填詞典</strong>prompt 在 <code>docs/PLAN.md</code> §4.2：「你是文字濾鏡，不是助理」開頭，含繁體、中英空格、自我更正、注入防護規則與範例。</div></li>
+  <li><div><strong>貼 zh-TW prompt、繁簡轉換選繁體、填詞典</strong>prompt 在 <code>docs/PLAN.md</code> §4.2：「你是文字濾鏡，不是助理」開頭，含繁體、中英空格、自我更正、注入防護規則與範例。</div></li>
   <li><div><strong>iPhone 先用捷徑頂著</strong>「聽寫文字」→ POST 到 LLM API → 拷貝到剪貼簿，綁 Action Button。第 2 週再換成自己的 App。</div></li>
 </ol>
 

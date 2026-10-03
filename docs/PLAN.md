@@ -27,7 +27,7 @@
 
 ### 1.1 Mac：Handy + SenseVoice + 自己的 LLM key
 
-Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好：Fn / 純修飾鍵全域熱鍵（`handy-keys`）、收據式剪貼簿貼上、Secure Input 偵測、底部 HUD、SQLite 歷史、OpenCC 繁體轉換（`ferrous-opencc`）、OpenAI 相容的 LLM 後處理、Apple Intelligence 本地整理。
+Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好：Fn / 純修飾鍵全域熱鍵（`handy-keys`）、收據式剪貼簿貼上、Secure Input 偵測、底部 HUD、SQLite 歷史、繁簡轉換（`ferrous-opencc`，v0.9.8 起是獨立設定）、OpenAI 相容的 LLM 後處理、Apple Intelligence 本地整理。
 
 1. 下載安裝（或 `brew install --cask handy`），授權 Microphone 與 Accessibility。
 2. **模型**：選 **SenseVoice-Small**（zh / yue / en / ja / ko，非自迴歸、純 CPU 即時、AISHELL-1 CER 2.96）。不要選 Parakeet（沒有中文）、不要選 Whisper turbo（簡繁混出、幻覺多）。
@@ -36,7 +36,8 @@ Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好�
    - Gemini：`https://generativelanguage.googleapis.com/v1beta/openai/`，model `gemini-3.1-flash-lite`（2.5 Flash-Lite 於 2026-10-16 關閉，不要用）
    - Claude：Anthropic 有 OpenAI 相容端點 ⚠（若 Handy 版本不支援，改用 §2 的 fork 直接接 Messages API），model `claude-haiku-4-5`
    - Prompt 貼 §4 的 zh-TW 版本。
-5. 開啟 OpenCC 繁體化、填入個人詞典（Handy v0.9.6 起自訂詞彙不限空白，但它的模糊比對只支援 ASCII；中文詞條靠 prompt 的 `<known_terms>` 區塊）。
+5. **繁簡轉換**：Advanced（進階）→「繁簡轉換」選「繁體」。v0.9.8（2026-10-03）起這是獨立於辨識語言的設定，系統語系是 zh-TW 時預設就是繁體；它用 OpenCC `s2tw` 只轉字、不轉台灣用語，所以「軟件 → 軟體」這類仍靠 prompt 或 §2 fork 的 `s2twp` 後置。
+6. 填入個人詞典（Handy v0.9.6 起自訂詞彙不限空白，但它的模糊比對只支援 ASCII；中文詞條靠 prompt 的 `<known_terms>` 區塊）。
 
 這一步做完，Mac 端的體驗已經接近 Typeless：按住 Fn 說「幫我跟 team 說一下 PR 我已經 merge 了然後 staging 的 API 大概十分鐘後會 deploy 完」，放開後貼出「幫我跟 team 說一下，PR 我已經 merge 了，staging 的 API 大概 10 分鐘後會 deploy 完。」
 
@@ -52,11 +53,24 @@ Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好�
 
 什麼時候需要 fork：想用 macOS 26/27 的 Apple `SpeechTranscriber`（zh_TW、零模型下載、原生串流）、想直接接 Claude Messages API（prompt cache、`temperature: 0`）、想做拼音別名詞典、想改 HUD。
 
+### 2.0 Handy 還值得當底嗎（2026-10-03 直接讀 git 歷史查核）
+
+| 項目 | 事實 |
+|---|---|
+| 年齡 | 首個 commit 2025-02-03，不到兩年 |
+| 最新版 | v0.9.8，2026-10-03；2026-02 起 8 個月出了 25 版以上，約兩週一版 |
+| 近三個月 commit | 2026-07 85、08 68、09 33（2026-05 / 06 曾安靜兩個月，各 4 / 9） |
+| 貢獻者 | 歷史 171 人；近半年主要作者 CJ Pais 104 個 commit，其餘多為單次貢獻 |
+| 依賴 | Tauri 2.11.5、`transcribe-rs` 0.3.8、`handy-keys` 0.3.4、`ort` 2.0.0-rc.12，都是現行版本 |
+| 最近與我們相關的改動 | v0.9.8 新增獨立的「繁簡轉換」設定（`chinese_script.rs`，國語用 `s2tw`、粵語用 `s2hk`）；v0.9.6 自訂詞彙放寬 |
+
+結論：它不是老專案，是一個單一主要維護者、社群貢獻活躍、節奏很快的專案。真正的風險有兩個：(1) **bus factor = 1**，CJ Pais 停手專案就會慢下來，但 MIT 授權加上我們只用它的殼，就算停更，熱鍵、貼上、HUD 這些已經穩定的部分照樣能用；(2) **上游動得太快**，fork 後每兩週就分岔一次。對策是下面 2.2 的原則：只改四處、不碰熱鍵 / 貼上 / Secure Input / HUD，改動盡量放在新檔案與最少的掛鉤點，上游每出一個 tag 就 `git merge` 一次，衝突面小就不痛。
+
 ### 2.1 建置
 
 ```bash
 git clone https://github.com/cjpais/Handy atype-mac && cd atype-mac
-git checkout v0.9.7
+git checkout v0.9.8
 rustup update stable && npm i && npm run tauri dev      # 先確認原版在 macOS 27 能跑、Fn 與貼上正常
 ```
 
