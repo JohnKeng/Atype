@@ -7,8 +7,11 @@
 use crate::managers::model::ModelInfo;
 
 /// Models shown in the UI / CLI, in display order. The first entry is the
-/// recommended one. Ids are Handy's: catalog entries (`handy-computer/…-gguf`,
-/// run by transcribe-cpp, Metal on Apple Silicon) and legacy ONNX/ggml entries.
+/// recommended one. Catalog entries are matched by repo id prefix because
+/// Handy's registry id is `"{repo_id}/{filename}"` (one entry per quant file
+/// that exists on disk, plus the default quant); these run through
+/// transcribe-cpp (Metal on Apple Silicon). The last two are legacy ONNX/ggml
+/// entries matched by exact id.
 pub const MODELS: &[&str] = &[
     "handy-computer/SenseVoiceSmall-gguf", // zh/yue/en/ja/ko, non-autoregressive, fastest
     "handy-computer/Qwen3-ASR-0.6B-gguf",  // 30 languages, strong Chinese; A/B against SenseVoice
@@ -23,8 +26,18 @@ pub const MODELS: &[&str] = &[
     "breeze-asr",       // legacy ggml Breeze
 ];
 
+fn matches(entry: &str, id: &str) -> bool {
+    id == entry
+        || id
+            .strip_prefix(entry)
+            .is_some_and(|rest| rest.starts_with('/'))
+}
+
 pub fn model_rank(id: &str) -> usize {
-    MODELS.iter().position(|m| *m == id).unwrap_or(MODELS.len())
+    MODELS
+        .iter()
+        .position(|m| matches(m, id))
+        .unwrap_or(MODELS.len())
 }
 
 pub fn is_allowed_model(id: &str) -> bool {
@@ -32,7 +45,7 @@ pub fn is_allowed_model(id: &str) -> bool {
 }
 
 pub fn is_recommended_model(id: &str) -> bool {
-    MODELS.first().is_some_and(|m| *m == id)
+    MODELS.first().is_some_and(|m| matches(m, id))
 }
 
 /// Filter, re-flag and re-order Handy's model list for Atype.
@@ -50,10 +63,20 @@ mod tests {
 
     #[test]
     fn allowlist_order_and_recommendation() {
-        assert!(is_recommended_model(MODELS[0]));
-        assert!(!is_recommended_model(MODELS[1]));
+        let sv = "handy-computer/SenseVoiceSmall-gguf/SenseVoiceSmall-Q8_0.gguf";
+        let qwen = "handy-computer/Qwen3-ASR-0.6B-gguf/Qwen3-ASR-0.6B-Q8_0.gguf";
+        assert!(is_recommended_model(sv));
+        assert!(!is_recommended_model(qwen));
+        assert!(model_rank(sv) < model_rank(qwen));
+        assert!(is_allowed_model("sense-voice-int8"));
         assert_eq!(model_rank("parakeet-tdt-0.6b-v3"), MODELS.len());
         assert!(!is_allowed_model("parakeet-tdt-0.6b-v3"));
-        assert!(model_rank(MODELS[0]) < model_rank(MODELS[1]));
+        assert!(!is_allowed_model(
+            "handy-computer/parakeet-unified-en-0.6b-gguf/x.gguf"
+        ));
+        // A different repo that merely shares a prefix string must not match.
+        assert!(!is_allowed_model(
+            "handy-computer/SenseVoiceSmall-gguf-other/x.gguf"
+        ));
     }
 }

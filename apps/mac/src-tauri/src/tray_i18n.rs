@@ -53,6 +53,8 @@ mod tests {
 
     #[test]
     fn resolves_locale_fallbacks() {
+        // Atype ships only `en` and `zh-TW`, so Simplified Chinese and other
+        // languages fall through to English (upstream expects "zh" / "fr").
         for (locale, expected) in [
             ("zh-Hant-TW", "zh-TW"),
             ("zh-Hant-HK", "zh-TW"),
@@ -60,10 +62,10 @@ mod tests {
             ("zh-MO", "zh-TW"),
             ("ZH-TW", "zh-TW"),
             ("zh_Hant_TW", "zh-TW"),
-            ("zh-Hans-CN", "zh"),
+            ("zh-Hans-CN", "en"),
             ("yue-Hant-HK", "zh-TW"),
-            ("yue-Hans-CN", "zh"),
-            ("fr-FR", "fr"),
+            ("yue-Hans-CN", "en"),
+            ("fr-FR", "en"),
             ("xx-YY", "en"),
         ] {
             assert_eq!(

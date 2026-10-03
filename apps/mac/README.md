@@ -75,6 +75,26 @@ LD_LIBRARY_PATH=$ORT_LIB_LOCATION/lib xvfb-run -a target/debug/handy \
   --transcribe-file zh.wav --model sense-voice-int8 --json
 ```
 
+## 驗證結果（2026-10-03，Linux x86_64 容器，debug build）
+
+| 項目 | 結果 |
+|---|---|
+| 前端 `tsc && vite build` | 通過，`dist/` 828 KB |
+| `cargo build`（Tauri + transcribe-cpp + ort） | 通過，4 分 48 秒（首次、含 whisper.cpp C++ 編譯） |
+| `cargo test` | 276 個測試全部通過（`tray_i18n` 的 locale 回退測試已改成只認 en / zh-TW） |
+| `cargo fmt --check`、`prettier --check` | 通過 |
+| `--list-models` | 11 個：SenseVoice Small [recommended]、Qwen3-ASR 0.6B、Fun-ASR Nano、Breeze-ASR-25、Qwen3-ASR 1.7B、Fun-ASR MLT、Whisper Large v3 Turbo、Moonshine zh ×2、legacy SenseVoice（已安裝）、legacy Breeze |
+| `--transcribe-file zh.wav`（SenseVoice int8 ONNX，CPU） | 「開放時間早上9點至下午5點。」5.6 s 音訊 1.56 s 辨識完（約 3.6× 即時），**輸出已是繁體** |
+| `--transcribe-file en.wav` | "The tribal chieftain called for the boy and presented him with 50 pieces of code." 7.2 s 音訊 1.98 s |
+| `--transcribe-file yue.wav` | 「呢幾個字都表達唔到我想講嘅意思。」5.1 s 音訊 1.52 s（粵語走香港字表） |
+| GUI（Xvfb + Vite dev server） | 可開啟；首次啟動的選模型頁如下圖，推薦模型是 SenseVoice Small（240 MB） |
+
+![Atype 首次啟動（Linux Xvfb）](../../docs/images/atype-mac-onboarding-linux-xvfb.png)
+
+測試音檔與 ONNX 模型來自 sherpa-onnx 的 GitHub release（`sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`）。這裡的辨識速度是**未最佳化的 debug build 跑在容器 CPU 上**，Mac 上 release build + Metal 的 GGUF 模型會快很多。還沒做的驗證：macOS 真機（Fn 熱鍵、Secure Input、貼上、麥克風）、GGUF 模型下載與 Metal 推論、LLM 後處理實際呼叫 Gemini / Claude。
+
+另外還留著的上游痕跡：首頁的 handy 文字 logo（`src/components/icons/HandyTextLogo.tsx`）、About 頁的連結與贊助文字、程式內部的 crate 名稱 `handy`。這些不影響功能，等真機跑順再換。
+
 ## 下一步（PLAN §2.2）
 
 1. `AppleSpeech.swift`：macOS 26+ 的 `SpeechTranscriber(zh_TW)` 引擎，接進 transcription manager。
