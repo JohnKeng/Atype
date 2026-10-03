@@ -61,7 +61,7 @@
 - [x] 三條路線提案與評審
 - [x] 商用版方案 v1 → 完整性批評 → v2（`docs/design/final-plan-v2.md`）
 - [x] 依「純自用、Mac + iPhone」重新定範圍（`docs/PLAN.md`）
-- [x] Mac 版骨架：`apps/mac`（Handy v0.9.8 fork；已剔除不用的部分並套上 Atype 預設；Linux 上前端建置、Rust 編譯、276 個單元測試、SenseVoice 無頭辨識與 Xvfb GUI 啟動都通過，見 `apps/mac/README.md`）
+- [x] Mac 版骨架：`apps/mac`（Handy v0.9.8 fork 當殼；Atype 自己的管線在 `src-tauri/src/atype/`：確定性中文層、LLM 時間預算、第二大腦 sink、模型白名單；Linux 上前端建置、Rust 編譯、289 個單元測試、SenseVoice 無頭辨識與 Xvfb GUI 啟動都通過，見 `apps/mac/README.md`）
 - [ ] Mac 真機驗證（macOS 27：Fn、貼上、Secure Input、GGUF + Metal、LLM 後處理）
 - [ ] 第一週 spike 與 bake-off（需要真機與可上網環境）
 - [ ] fork 的四處改動（Apple `SpeechTranscriber`、Claude Messages API 直連、OpenCC 後置 + pangu、拼音詞典）

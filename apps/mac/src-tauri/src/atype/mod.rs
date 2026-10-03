@@ -3,8 +3,23 @@
 //! Everything here is a filter or default on top of Handy's own machinery.
 //! Hooks into Handy code (each a one-line call):
 //! - `ModelManager::get_available_models` → [`shape_model_list`]
+//! - `actions::process_transcription_output` → [`zh_post::polish`] and the
+//!   LLM time budget from [`config::AtypeConfig::llm_timeout_ms`]
+//! - `lib.rs` setup → [`init`] (second-brain listener)
+//! - `--polish TEXT` on the CLI → [`zh_post::polish`]
+
+pub mod brain;
+pub mod config;
+pub mod zh_post;
 
 use crate::managers::model::ModelInfo;
+use tauri::AppHandle;
+
+/// Everything Atype wires up at runtime. Called once after Handy's managers
+/// are registered.
+pub fn init(app: &AppHandle) {
+    brain::init(app);
+}
 
 /// Models shown in the UI / CLI, in display order. The first entry is the
 /// recommended one. Catalog entries are matched by repo id prefix because

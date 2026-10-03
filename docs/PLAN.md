@@ -68,7 +68,7 @@ Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好�
 
 ### 2.1 建置
 
-fork 已經在這個 repo 的 [`apps/mac`](../apps/mac/README.md)：Handy v0.9.8 用 `git subtree` 匯入，剔除了 24 個介面語言、Windows / Linux 打包、自動更新（原本會從上游 Releases 把 fork 蓋回 Handy）、上游 CI / Nix / 測試 / 贊助素材，並套上 Atype 預設：中文模型白名單（SenseVoice Small 推薦）、供應商只留 Gemini / Anthropic / Groq / Apple Intelligence / Custom、預設 prompt 為 §4.2、繁簡轉換預設繁體。刪了什麼、改了什麼、怎麼跟上游，都在該目錄的 README。
+fork 已經在這個 repo 的 [`apps/mac`](../apps/mac/README.md)：Handy v0.9.8 用 `git subtree` 匯入，剔除了 24 個介面語言、Windows / Linux 打包、自動更新（原本會從上游 Releases 把 fork 蓋回 Handy）、上游 CI / Nix / 測試 / 贊助素材，並套上 Atype 預設：中文模型白名單（SenseVoice Small 推薦）、供應商只留 Gemini / Anthropic / Groq / Apple Intelligence / Custom、預設 prompt 為 §4.2、繁簡轉換預設繁體。刪了什麼、改了什麼、怎麼跟上游，都在該目錄的 README。**2026-10-03 已完成**：§2.2 (c) 的確定性層（`s2twp` 閘門 + 全形標點 + pangu）、LLM 2.5 秒時間預算、第二大腦 JSONL / Markdown sink、`--polish` CLI，全部在 `apps/mac/src-tauri/src/atype/`，289 個測試通過。
 
 ```bash
 cd apps/mac

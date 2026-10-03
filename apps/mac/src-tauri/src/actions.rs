@@ -360,8 +360,25 @@ pub(crate) async fn process_transcription_output(
     let mut post_processed_text: Option<String> = None;
     let mut post_process_prompt: Option<String> = None;
 
+    // Atype: the LLM gets a bounded time budget; past it, the deterministic
+    // layer below runs on the raw transcription and that is what gets pasted.
+    let atype_cfg = crate::atype::config::load(app);
     if post_process {
-        if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
+        let budget = std::time::Duration::from_millis(atype_cfg.llm_timeout_ms.max(1));
+        let outcome =
+            match tokio::time::timeout(budget, post_process_transcription(&settings, &final_text))
+                .await
+            {
+                Ok(result) => result,
+                Err(_) => {
+                    warn!(
+                    "Atype: LLM post-processing exceeded {} ms; pasting the deterministic result",
+                    atype_cfg.llm_timeout_ms
+                );
+                    None
+                }
+            };
+        if let Some(processed_text) = outcome {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 
@@ -374,6 +391,13 @@ pub(crate) async fn process_transcription_output(
                     post_process_prompt = Some(prompt.prompt.clone());
                 }
             }
+        }
+    }
+
+    if atype_cfg.zh_post_enabled {
+        final_text = crate::atype::zh_post::polish(&final_text);
+        if let Some(text) = post_processed_text.as_mut() {
+            *text = crate::atype::zh_post::polish(text);
         }
     }
 

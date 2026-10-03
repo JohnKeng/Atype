@@ -75,6 +75,54 @@ LD_LIBRARY_PATH=$ORT_LIB_LOCATION/lib xvfb-run -a target/debug/handy \
   --transcribe-file zh.wav --model sense-voice-int8 --json
 ```
 
+## Atype 自己的管線（`src-tauri/src/atype/`）
+
+這一層才是 Atype，Handy 只是殼。全部放在新目錄，對 Handy 的檔案只留一行掛鉤。
+
+| 模組 | 做什麼 | 掛在哪 |
+|---|---|---|
+| `zh_post.rs` | 確定性中文層：只有偵測到真正的簡體字才跑 OpenCC `s2twp`（软件→軟體、网络→網路、鼠标→滑鼠），台北、著名、後面這類兩岸共用字不會被誤判；中文句子的 ASCII 標點轉全形（保留 3.5、3:30、example.com、1,000）；中英數之間一個半形空格；清掉全形標點旁的空格。**每次結果都跑**：LLM 有回來就套在 LLM 輸出上，LLM 關掉、失敗或逾時就套在原始辨識上 | `actions::process_transcription_output` 末尾 |
+| LLM 時間預算 | 超過 `llm_timeout_ms`（預設 2.5 秒）就不等 LLM，直接貼確定性層處理過的原文，不會卡住 | 同上，`tokio::time::timeout` 包住 LLM 呼叫 |
+| `config.rs` | `atype.json`，首次啟動自動建立在 App 資料目錄（macOS：`~/Library/Application Support/com.atype.mac/atype.json`）。欄位：`zh_post_enabled`、`llm_timeout_ms`、`brain_enabled`、`brain_dir` | — |
+| `brain.rs` | **第二大腦**：訂閱 Handy 寫入歷史時發出的事件，把每一筆追加到 `atype.jsonl`（時間、貼上的文字、原始辨識、是否經 LLM、音檔名）和 `YYYY/YYYY-MM-DD.md` 日誌。預設資料夾：macOS 有 iCloud Drive 時是 `iCloud Drive/Atype/brain`，否則 App 資料目錄下的 `brain/`。Handy 的歷史會被保留期限清掉，這裡不會 | `lib.rs` 的 `atype::init(app_handle)` 一行 |
+| `mod.rs` | 中文模型白名單與推薦順序 | `get_available_models` 一行 |
+| `--polish TEXT` | 不開 App、不載模型，直接看確定性層的輸出 | `cli.rs`、`lib.rs` 各幾行 |
+
+`--polish` 實跑結果：
+
+| 輸入 | 輸出 |
+|---|---|
+| `呃我们那个明天下午3:30开会,地点在Costco旁边的路易莎.` | 呃我們那個明天下午 3:30 開會，地點在 Costco 旁邊的路易莎。 |
+| `我今天push了code,然后staging的API大概10分钟后会deploy完` | 我今天 push 了 code，然後 staging 的 API 大概 10 分鐘後會 deploy 完 |
+| `這個軟體的介面很好用,但是网络有点慢` | 這個軟體的介面很好用，但是網路有點慢 |
+| `Hello, world. How are you?` | Hello, world. How are you?（純英文不動） |
+| `有10%的人用C++写程式` | 有 10% 的人用 C++ 寫程式 |
+
+贅詞（呃、那個）和自我更正交給 LLM 的 zh-TW prompt；確定性層只負責「不能靠 LLM 記得」的事。
+
+## 在 Mac 上跑起來（第一次，約 30 分鐘）
+
+```bash
+# 需求：Xcode Command Line Tools、Rust（rustup）、bun、cmake
+xcode-select --install
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+curl -fsSL https://bun.sh/install | bash
+brew install cmake
+
+git clone https://github.com/JohnKeng/Atype.git && cd Atype
+git checkout claude/typeless-cross-platform-5afuaf
+cd apps/mac && bun install && bun run tauri dev
+```
+
+1. 第一次啟動會要「麥克風」和「輔助使用」權限，給了之後重新啟動一次。
+2. 首頁選 **SenseVoice Small**（240 MB）下載。想比較就再下載 Qwen3-ASR 0.6B。
+3. 設定 → 後處理：供應商選 **Gemini**，貼 API key，模型填 `gemini-3.1-flash-lite`；prompt 已是「整理口語（zh-TW）」。沒 key 也能用，只是少了去贅詞。
+4. 熱鍵預設是 Option + Space。要用 Fn：設定裡改成 Fn，並把「系統設定 → 鍵盤 → 按下 🌐 鍵時」改成「不執行任何操作」。
+5. 在任何輸入框按住熱鍵說一句中英夾雜的話，放開。文字應該直接貼上，繁體、全形標點、中英有空格。
+6. 看 `~/Library/Mobile Documents/com~apple~CloudDocs/Atype/brain/`（或 `~/Library/Application Support/com.atype.mac/brain/`）有沒有 `atype.jsonl` 和今天的 `.md`。
+
+哪一步不對就把畫面或 `~/Library/Logs/com.atype.mac/` 的 log 貼回來。
+
 ## 驗證結果（2026-10-03，Linux x86_64 容器，debug build）
 
 | 項目 | 結果 |
@@ -95,9 +143,10 @@ LD_LIBRARY_PATH=$ORT_LIB_LOCATION/lib xvfb-run -a target/debug/handy \
 
 另外還留著的上游痕跡：首頁的 handy 文字 logo（`src/components/icons/HandyTextLogo.tsx`）、About 頁的連結與贊助文字、程式內部的 crate 名稱 `handy`。這些不影響功能，等真機跑順再換。
 
-## 下一步（PLAN §2.2）
+## 下一步
 
-1. `AppleSpeech.swift`：macOS 26+ 的 `SpeechTranscriber(zh_TW)` 引擎，接進 transcription manager。
-2. `anthropic.rs`：直接打 Claude Messages API（`temperature: 0`、prompt cache、2.5 s 逾時就貼原文）。
-3. 確定性層：LLM 輸出後再跑一次 OpenCC `s2twp`（Handy 內建只做 `s2tw`）+ pangu 中英空格 + 全形標點。
-4. 拼音別名詞典。
+1. 你在 Mac 上跑過第一次，回報哪裡卡（這一步沒有你做不了）。
+2. 拼音別名詞典（`atype/dictionary.rs`）：人名、產品名的同音錯字修正，詞條同時餵進 prompt 的 `<known_terms>`。
+3. Atype 設定頁：一頁式 HTML 視窗編輯 `atype.json` 與詞典，不改 Handy 的 React 設定頁。
+4. `AppleSpeech.swift`：macOS 26+ 的 `SpeechTranscriber(zh_TW)` 引擎（需要在 Mac 上編譯驗證）。
+5. iPhone App（`docs/PLAN.md` §3），與 Mac 共用 prompt、詞典、第二大腦資料夾。

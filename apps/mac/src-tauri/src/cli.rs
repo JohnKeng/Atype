@@ -60,4 +60,9 @@ pub struct CliArgs {
     /// Emit --transcribe-file results as JSON.
     #[arg(long)]
     pub json: bool,
+
+    /// Atype: run the deterministic Chinese layer (s2twp, full-width
+    /// punctuation, spacing) on TEXT, print the result and exit.
+    #[arg(long, value_name = "TEXT")]
+    pub polish: Option<String>,
 }
