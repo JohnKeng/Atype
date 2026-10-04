@@ -7,7 +7,7 @@
 | 部分 | 狀態 |
 |---|---|
 | Mac App（[`apps/mac`](../apps/mac/README.md)） | **可以用**。熱鍵錄音、本機辨識、LLM 整理、繁體與排版、貼上、第二大腦都已接好。正在日常試用 |
-| iPhone App | 尚未開始（見下方「iPhone」） |
+| iPhone 鍵盤 | 設計完成，下一個實作（見下方「iPhone」） |
 
 ## 已定的決策
 
@@ -39,26 +39,57 @@ flowchart LR
 3. **拼音別名詞典**：人名、產品名的同音錯字修正（無聲調拼音、音節級比對，只替換自己加的詞），詞條同時餵進 prompt 的 `<known_terms>`。
 4. **詞典編輯介面**：放進「個人化」頁（頁面本身、使用量統計、第二大腦資料夾、LLM 時間預算已於 2026-10-04 完成）。
 5. **Apple `SpeechTranscriber` 引擎**（macOS 26+，zh_TW、零下載、輸出就是繁體）。
-6. **iPhone App**。
+6. **iPhone 鍵盤**：照下方「iPhone」的 I1 到 I4 做。
 7. **第二大腦的用法**：全文搜尋、每日摘要、匯出到筆記工具。
 
-## iPhone
+## iPhone：完整取代 Typeless 的鍵盤
 
-iOS 鍵盤 extension 不能錄音（Full Access 也不行），記憶體上限約 30–60 MB，所以 iPhone 版是一個小的主 App 負責錄音與辨識：
+**目標**：在任何 App 的輸入框，點 Atype 鍵盤上的麥克風說話，整理好的繁體中文直接插在游標處。和 Typeless 的用法一樣，不用捷徑、不用自己貼上。圖解見 [`architecture.html`](architecture.html)。
 
-```
-Action Button / 控制中心（AudioRecordingIntent + Live Activity）
-  → 主 App 錄音（AVAudioSession .playAndRecord，UIBackgroundModes: audio）
-  → SpeechTranscriber(zh_TW) 本機辨識
-  → LLM 整理 → 確定性中文層 → 剪貼簿（+ 第二大腦）
-  →（選配）鍵盤 extension 從 App Group 讀結果並 insertText
-```
+### 為什麼需要 App 在背景
 
-- 最省事的入口是 Action Button：在任何 App 按住說話，放開後文字已在剪貼簿。鍵盤 extension 之後再做，模板用 Dictus（MIT）。
-- `AVAudioSession` 的 category 要在前景設定一次；`AudioRecordingIntent` 必須同時啟動 Live Activity，intent 放在 App target。第一個真機測試就驗這兩件。
+蘋果不讓第三方鍵盤擴充使用麥克風，開了「完全取用」也一樣。Typeless、Wispr Flow、superwhisper 都是同一套做法，Atype 照做：
+
+- **Atype 鍵盤**（keyboard extension）：麥克風鍵、即時字幕、插字，加上切換鍵盤、空白、刪除、換行。不放任何模型，記憶體控制在 40 MB 內。
+- **Atype App**：在背景拿著麥克風（`UIBackgroundModes: audio`），跑 `SpeechTranscriber(zh_TW)` 串流辨識，再經過 LLM 整理與中文層。
+- 兩者之間用 App Group 共享資料、Darwin 通知互相叫醒。原始辨識結果先存好再去整理，鍵盤被系統收掉也不掉字。
+
+### 使用流程
+
+1. **當天第一次**：點鍵盤麥克風，跳到 Atype（開麥克風，動態島亮起），點左上角「◀ LINE」回原 App，說話，點「完成」，字插進游標處。這次切換是蘋果的限制，所有同類產品都一樣。
+2. **之後每一次**：App 在背景待命（預設 10 分鐘，可設定），點麥克風就直接錄，不再切換。
+3. **其他入口**：Action Button、控制中心直接開始一段，結果進剪貼簿。選取文字後點「用說的改」，用語音指令修改那段字。
+
+### 比 Typeless 好的地方
+
+- 辨識在手機本機，聲音不上傳。
+- 繁體、全形標點、中英空格由程式保證。
+- 邊說邊在鍵盤上看到字。
+- 不設單次長度上限（Typeless 是 6 分鐘）。
+- 麥克風不佔 emoji 鍵，保留換行鍵（Typeless 2026 年初評論最常抱怨的兩點）。
+- 第二大腦、詞典、prompt 和 Mac 共用。
+
+### 實作順序
+
+| 階段 | 內容 | 做完的樣子 |
+|---|---|---|
+| I1 | Atype App：按住說話、本機辨識、LLM、中文層、剪貼簿、第二大腦；驗證背景開麥克風 | App 裡說話能拿到整理好的字 |
+| I2 | Atype 鍵盤：冷啟動切換、背景待命、即時字幕、插字、基本鍵 | **可以取代 Typeless 日常使用** |
+| I3 | Action Button、控制中心、動態島、待命時間設定、「個人化」頁 | 不開鍵盤也能用 |
+| I4 | 用說的改（Speak to edit）、拼音別名詞典 | 功能追平並超過 Typeless |
+
+### 工程重點
+
+- `AVAudioSession` 的 category 必須在前景設定一次；冷啟動時 App 進入前景後才能 `AVAudioEngine.start()`，要先把請求暫存。
+- 從鍵盤開 App 用 `extensionContext.open(url)`；自動跳回原 App 只能靠私有 API，**不做**，改成清楚的「點左上角回去」提示。
+- 鍵盤沒開「完全取用」時仍要能打基本鍵，並說明麥克風需要它。
 - 沒網路時用 Apple Foundation Models 離線整理（prompt 壓到 300 token 內）。
-- 建議加入 Apple Developer Program（US$99/年）：簽章一年有效，App Groups、Live Activity、App Intents 不受限，Mac 版也能用固定簽章，免去每次重新編譯後重給輔助使用權限。
-- prompt、詞典、第二大腦資料夾與 Mac 共用（iCloud Drive）。
+- 確定性中文層用 Swift 重寫一份，測試案例和 Mac 的 `zh_post.rs` 共用。
+
+### 需要準備
+
+- **完整的 Xcode**（App Store 免費，約 15 GB）。目前 Mac 上只有命令列工具，編得了 Mac 版，編不了 iPhone 版。
+- **Apple Developer Program**（每年 US$99）。免費帳號裝到手機的版本 7 天失效，App Group 也不穩定；有了它，Mac 版也能用固定簽章，免去每次重裝後重給輔助使用權限。
 
 ## 模型
 

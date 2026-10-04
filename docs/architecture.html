@@ -1,0 +1,272 @@
+<title>Atype 架構</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the iPhone flow is the centrepiece, set beside a keyboard mock. Colors come from the parrot app icon. */
+:root {
+  --bg: #fbf7ee;
+  --panel: #f3eedf;
+  --ink: #2a1e16;
+  --muted: #6d6152;
+  --line: #e2d9c6;
+  --leaf: #6ab158;
+  --leaf-deep: #3f7f3a;
+  --leaf-soft: #e4f1dc;
+  --bark: #4a2012;
+  --warn: #c2410c;
+  --key: #ffffff;
+  --key-ink: #2a1e16;
+  --font-body: "Noto Sans TC", "PingFang TC", "Heiti TC", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --step: clamp(15px, 0.9rem + 0.2vw, 17px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d201b; --panel: #262a23; --ink: #eef2e8; --muted: #a9b0a0; --line: #3a4035;
+    --leaf: #a3d490; --leaf-deep: #8cc47a; --leaf-soft: #2c3a27; --bark: #e3f1d9; --warn: #fb923c;
+    --key: #3a3f36; --key-ink: #eef2e8; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d201b; --panel: #262a23; --ink: #eef2e8; --muted: #a9b0a0; --line: #3a4035;
+  --leaf: #a3d490; --leaf-deep: #8cc47a; --leaf-soft: #2c3a27; --bark: #e3f1d9; --warn: #fb923c;
+  --key: #3a3f36; --key-ink: #eef2e8; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+  font-size: var(--step); line-height: 1.7; padding-inline: 16px; padding-block: 32px 64px;
+}
+.wrap { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; }
+h1 { font-weight: 900; font-size: clamp(30px, 5vw, 46px); letter-spacing: -0.01em; }
+h2 { font-weight: 900; font-size: clamp(22px, 3vw, 28px); }
+h3 { font-weight: 700; font-size: 18px; }
+p { margin: 0; max-width: 66ch; }
+.lede { color: var(--muted); font-size: 1.08em; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--leaf-deep); }
+section { display: flex; flex-direction: column; gap: 18px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+
+/* status chips */
+.status { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; background: var(--panel); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: var(--leaf); }
+.dot.next { background: var(--warn); }
+
+/* pipeline */
+.pipe { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.stage { flex: 1 1 150px; min-width: 0; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--panel); display: flex; flex-direction: column; gap: 4px; }
+.stage b { font-size: 15px; }
+.stage span { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.stage.net { border-color: var(--leaf); border-style: dashed; }
+.stage .n { font-family: var(--font-mono); font-size: 11px; color: var(--leaf-deep); }
+
+/* device split */
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.device { border: 1.5px solid var(--line); border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.device h3 { display: flex; align-items: center; gap: 10px; }
+.tag { font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--leaf-soft); color: var(--leaf-deep); }
+.tag.plan { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
+.device ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+.device li { font-size: 15px; }
+
+/* iPhone hero */
+.iphone { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+@media (max-width: 760px) { .iphone { grid-template-columns: 1fr; } .kb { justify-self: center; } }
+.callout { border-left: 4px solid var(--leaf); background: var(--leaf-soft); padding: 12px 16px; border-radius: 0 12px 12px 0; font-size: 15px; }
+.callout.warn { border-left-color: var(--warn); background: var(--panel); }
+
+/* keyboard mock */
+.kb { width: 100%; max-width: 300px; border-radius: 26px; border: 1.5px solid var(--line); background: var(--panel); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.kb-cap { font-size: 12px; color: var(--muted); text-align: center; }
+.live { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.55; min-height: 64px; }
+.live .rec { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--warn); margin-bottom: 4px; }
+.live .rec i { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); display: inline-block; }
+.live .tent { color: var(--muted); }
+.mic { align-self: center; width: 76px; height: 76px; border-radius: 50%; background: var(--leaf-deep); display: grid; place-items: center; box-shadow: 0 0 0 8px var(--leaf-soft); }
+.mic svg { width: 30px; height: 30px; fill: #fff; }
+.row { display: grid; grid-template-columns: 40px 1fr 48px 56px; gap: 6px; }
+.key { background: var(--key); color: var(--key-ink); border-radius: 8px; height: 40px; display: grid; place-items: center; font-size: 13px; border: 1px solid var(--line); }
+.key svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.legend { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+
+/* flows */
+.flow { overflow-x: auto; border: 1.5px solid var(--line); border-radius: 16px; padding: 12px 8px; background: var(--bg); }
+.flow pre { margin: 0; }
+.flows { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.flows > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* table */
+.tbl { overflow-x: auto; border: 1.5px solid var(--line); border-radius: 16px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 500; background: var(--panel); }
+tr:last-child td { border-bottom: 0; }
+td.y { color: var(--leaf-deep); font-weight: 700; }
+td.p { color: var(--warn); font-weight: 700; }
+
+/* milestones */
+.ms { display: flex; flex-direction: column; gap: 10px; }
+.m { display: grid; grid-template-columns: 56px 1fr; gap: 14px; align-items: start; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.m:last-child { border-bottom: 0; }
+.m .id { font-family: var(--font-mono); font-weight: 500; color: var(--leaf-deep); font-size: 15px; padding-top: 2px; }
+.m p { font-size: 15px; }
+.m .done { color: var(--muted); font-size: 13px; }
+footer { color: var(--muted); font-size: 13px; }
+a { color: var(--leaf-deep); }
+a:focus-visible, .chip:focus-visible { outline: 2px solid var(--leaf-deep); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:14px">
+    <div class="eyebrow">Atype · 自用的 Typeless · 2026-10-04</div>
+    <h1>按住說話，放開就是可以送出的繁體中文</h1>
+    <p class="lede">Mac 版已經在用。iPhone 版是完整的鍵盤，用法和 Typeless 一樣：在任何 App 的輸入框點鍵盤上的麥克風，說完字就插在游標處，不經過捷徑，也不用自己貼上。</p>
+    <div class="status">
+      <span class="chip"><i class="dot ok"></i>Mac：可用</span>
+      <span class="chip"><i class="dot next"></i>iPhone 鍵盤：設計完成，下一個實作</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="eyebrow">兩台裝置，同一條管線</div>
+    <h2>聲音不出裝置，只有文字去整理</h2>
+    <div class="pipe" aria-label="管線">
+      <div class="stage"><span class="n">1</span><b>開始</b><span>Mac：按住 Option + Space<br>iPhone：鍵盤上的麥克風</span></div>
+      <div class="stage"><span class="n">2</span><b>本機辨識</b><span>Mac：SenseVoice Small<br>iPhone：Apple SpeechTranscriber（zh_TW）</span></div>
+      <div class="stage net"><span class="n">3 · 唯一上網的一步</span><b>LLM 整理</b><span>Gemini 3.1 Flash-Lite，去贅詞、處理改口。超過 2.5 秒就跳過</span></div>
+      <div class="stage"><span class="n">4</span><b>中文層</b><span>保證繁體、全形標點、中英之間有空格</span></div>
+      <div class="stage"><span class="n">5</span><b>放進去</b><span>Mac：貼到目前的 App<br>iPhone：鍵盤直接插到游標處</span></div>
+      <div class="stage"><span class="n">6</span><b>第二大腦</b><span>每一筆寫進 iCloud 雲碟的 Atype/brain，兩台共用</span></div>
+    </div>
+    <div class="split">
+      <div class="device">
+        <h3>Mac <span class="tag">已完成</span></h3>
+        <ul>
+          <li>選單列 App，平常不佔 Dock</li>
+          <li>熱鍵按住說、放開貼上；輕按一下可說長段</li>
+          <li>「個人化」頁：字數統計、第二大腦資料夾、LLM 時間預算</li>
+          <li>桌面殼來自 Handy（MIT），Atype 的邏輯在 <code>src-tauri/src/atype/</code></li>
+        </ul>
+      </div>
+      <div class="device">
+        <h3>iPhone <span class="tag plan">下一個實作</span></h3>
+        <ul>
+          <li><b>Atype 鍵盤</b>：麥克風、即時字幕、插字，外加空白、刪除、換行、切換鍵盤</li>
+          <li><b>Atype App</b>：在背景拿著麥克風，負責辨識與整理</li>
+          <li>prompt、詞典、第二大腦和 Mac 共用</li>
+          <li>Swift 原生，iOS 26 以上</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">iPhone · 和 Typeless 同一種做法</div>
+    <h2>主角是鍵盤，App 在背景聽</h2>
+    <div class="iphone">
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <p>蘋果不讓任何第三方鍵盤直接使用麥克風，開了「完全取用」也一樣。所以 Typeless、Wispr Flow 都是同一套做法：鍵盤負責畫面和插字，錄音交給自己的 App 在背景做。Atype 照這個做，並修掉 Typeless 被抱怨最多的兩點。</p>
+        <div class="callout"><b>一段工作階段只切換一次。</b>當天第一次點麥克風時，會跳到 Atype 開麥克風，你點左上角的「◀ LINE」回去就能說。之後 App 在背景待命，再點麥克風就直接錄，不會再跳走。待命多久可以在 App 裡設定，預設 10 分鐘。</div>
+        <div class="callout warn"><b>修正 Typeless 的兩個問題。</b>麥克風不佔 emoji 鍵的位置，並保留換行鍵。字會邊說邊出現在鍵盤上方，說完放進輸入框的是整理過的版本。</div>
+      </div>
+      <div class="kb" role="img" aria-label="Atype 鍵盤示意：上方即時字幕，中間麥克風，下方切換鍵盤、空白、刪除、換行">
+        <div class="kb-cap">Atype 鍵盤（示意）</div>
+        <div class="live">
+          <div class="rec"><i></i>錄音中 0:07</div>
+          我們明天下午 3:30 開會，地點在 Costco 旁邊的<span class="tent">路易莎…</span>
+        </div>
+        <div class="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></div>
+        <div class="row">
+          <div class="key" title="切換鍵盤"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></div>
+          <div class="key">空白</div>
+          <div class="key" title="刪除"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M13 9l5 6M18 9l-5 6"/></svg></div>
+          <div class="key">換行</div>
+        </div>
+        <div class="legend"><span>點麥克風開始，再點一次完成。</span><span>按住麥克風說，放開就完成，也可以。</span></div>
+      </div>
+    </div>
+
+    <div class="flows">
+      <div>
+        <h3>當天第一次（切換一次）</h3>
+        <div class="flow"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor 你
+  participant K as Atype 鍵盤
+  participant A as Atype App
+  participant H as 原本的 App
+  你->>K: 點麥克風
+  K->>A: 開啟 Atype
+  A->>A: 開麥克風，動態島亮起
+  你->>H: 點左上角「◀ LINE」回去
+  你->>A: 說話（字即時出現在鍵盤上）
+  你->>K: 點「完成」
+  A->>A: LLM 整理 → 中文層
+  A-->>K: 整理好的文字
+  K->>H: 插入游標處
+</pre></div>
+      </div>
+      <div>
+        <h3>之後每一次（不切換）</h3>
+        <div class="flow"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor 你
+  participant K as Atype 鍵盤
+  participant A as Atype App（背景待命）
+  participant H as 原本的 App
+  你->>K: 點麥克風
+  K->>A: 開始錄音
+  你->>A: 說話
+  你->>K: 點「完成」
+  A-->>K: 整理好的文字
+  K->>H: 插入游標處
+</pre></div>
+      </div>
+    </div>
+    <p style="font-size:15px;color:var(--muted)">鍵盤和 App 之間用 App Group 共享資料、用 Darwin 通知互相叫醒。原始辨識結果會先存好再送去整理，鍵盤被系統收掉也不會掉字。另外還有兩個入口：Action Button 和控制中心可以直接開始一段，結果放進剪貼簿；選取文字後點「用說的改」，可以用語音指令修改那段字。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">完全取代 Typeless</div>
+    <h2>功能對照</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>功能</th><th>Typeless iPhone</th><th>Atype iPhone</th></tr></thead>
+        <tbody>
+          <tr><td>在任何 App 用鍵盤說話、直接插字</td><td>有</td><td class="y">有</td></tr>
+          <tr><td>去贅詞、處理「不對，是…」這類改口</td><td>有</td><td class="y">有（zh-TW prompt）</td></tr>
+          <tr><td>保證繁體、全形標點、中英空格</td><td>靠模型</td><td class="y">程式保證</td></tr>
+          <tr><td>語音辨識在哪裡做</td><td>雲端</td><td class="y">手機本機，聲音不上傳</td></tr>
+          <tr><td>邊說邊在鍵盤上看到字</td><td>未確認</td><td class="y">有</td></tr>
+          <tr><td>單次長度上限</td><td>6 分鐘</td><td class="y">不設限</td></tr>
+          <tr><td>emoji 鍵、換行鍵</td><td>2026 年初評論：麥克風佔掉 emoji 鍵、沒有換行鍵</td><td class="y">都保留</td></tr>
+          <tr><td>選取文字後用說的改（Speak to edit）</td><td>有</td><td class="p">第 4 階段</td></tr>
+          <tr><td>個人詞典</td><td>有</td><td class="y">有，Mac 和 iPhone 共用</td></tr>
+          <tr><td>歷史紀錄</td><td>App 內</td><td class="y">第二大腦，Markdown 和 JSONL，跨裝置</td></tr>
+          <tr><td>第一次使用要切到 App 一次</td><td>要</td><td>要（蘋果的限制，大家都一樣）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">iPhone 實作順序</div>
+    <h2>四個階段，每段結束都能用</h2>
+    <div class="ms">
+      <div class="m"><div class="id">I1</div><div><p><b>App 會聽會整理</b>：在 Atype App 裡按住說話，本機辨識，經過 LLM 和中文層，結果複製到剪貼簿，同時寫進第二大腦。順便驗證在背景開麥克風這條路。</p></div></div>
+      <div class="m"><div class="id">I2</div><div><p><b>鍵盤插字</b>：Atype 鍵盤上線，包含當天第一次切換、背景待命、即時字幕、插字，以及切換鍵盤、空白、刪除、換行這幾個基本鍵。<b>做完這段就能取代 Typeless 日常使用。</b></p></div></div>
+      <div class="m"><div class="id">I3</div><div><p><b>入口與待命</b>：Action Button 與控制中心的入口、動態島顯示狀態、待命時間設定，並在 App 裡加上和 Mac 一樣的「個人化」頁。</p></div></div>
+      <div class="m"><div class="id">I4</div><div><p><b>用說的改、詞典</b>：選取文字後用語音修改，加上拼音別名詞典（和 Mac 共用）。</p></div></div>
+    </div>
+    <div class="callout warn"><b>需要你準備的兩樣。</b>一是完整的 Xcode（App Store 免費，約 15 GB）；現在 Mac 上只有命令列工具，編得了 Mac 版，編不了 iPhone 版。二是 Apple Developer Program（每年 US$99）：免費帳號裝到手機上的版本 7 天就會失效，鍵盤和 App 之間的 App Group 也需要它才穩定。</div>
+  </section>
+
+  <footer>原始碼與文件：<span class="mono">github.com/JohnKeng/Atype</span>（<span class="mono">docs/PLAN.md</span>、<span class="mono">apps/mac/README.md</span>）。蘋果對鍵盤麥克風的限制、競品做法與來源，整理在 <span class="mono">docs/archive/research/ios-keyboard.md</span>。</footer>
+</div>

@@ -2,7 +2,7 @@
 
 按住熱鍵說話，放開就得到可以直接送出的**繁體中文**：去掉贅詞、保留中英夾雜、全形標點、中英之間有空格，不出簡體，不改你的意思。
 
-這是自用的 Typeless。Mac 已經能用，iPhone 是下一步。
+這是自用的 Typeless。Mac 已經能用；iPhone 是下一步，做成和 Typeless 一樣的鍵盤。架構圖解在 [`docs/architecture.html`](docs/architecture.html)。
 
 ![Atype 的個人化頁面](docs/images/atype-mac-personal.png)
 
@@ -42,7 +42,8 @@ flowchart LR
 | 路徑 | 內容 |
 |---|---|
 | [`apps/mac/`](apps/mac/README.md) | Mac App。Atype 自己的程式在 `src-tauri/src/atype/` |
-| [`docs/PLAN.md`](docs/PLAN.md) | 決策、下一步、iPhone 計畫、模型、prompt、測試句 |
+| [`docs/PLAN.md`](docs/PLAN.md) | 決策、下一步、iPhone 鍵盤計畫、模型、prompt、測試句 |
+| [`docs/architecture.html`](docs/architecture.html) | 圖解架構：Mac 與 iPhone 鍵盤的流程、和 Typeless 的功能對照 |
 | [`docs/archive/`](docs/archive/README.md) | 早期研究與商用版方案，不再維護 |
 
 ## 致謝
