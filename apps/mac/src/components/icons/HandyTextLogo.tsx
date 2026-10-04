@@ -1,55 +1,42 @@
 import React from "react";
+import appIcon from "@/assets/atype-icon.png";
 
 // Product name, not UI copy: never translated.
 const BRAND_NAME = "Atype";
 
-// Atype wordmark: voice-waveform mark + "Atype". The file and component keep
-// their upstream (Handy) names so `git subtree pull` stays conflict-free for
-// every component that imports it.
+// Atype logo: the app icon (src/assets/atype-icon.png, replaced together with
+// the macOS icon by `bun run icon:set`) next to the name. The file and
+// component keep their upstream (Handy) names so imports stay unchanged.
 const HandyTextLogo = ({
-  width,
-  height,
+  width = 120,
   className,
 }: {
   width?: number;
   height?: number;
   className?: string;
 }) => {
+  const iconSize = Math.round(width * 0.32);
+  const fontSize = Math.round(width * 0.22);
   return (
-    <svg
-      width={width}
-      height={height}
-      className={className}
-      viewBox="0 0 560 160"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="Atype"
+    <div
+      className={`inline-flex items-center justify-center gap-2 select-none ${className ?? ""}`}
+      style={{ width }}
     >
-      <g className="logo-primary">
-        <rect x="8" y="64" width="18" height="32" rx="9" />
-        <rect x="38" y="40" width="18" height="80" rx="9" />
-        <rect x="68" y="16" width="18" height="128" rx="9" />
-        <rect x="98" y="40" width="18" height="80" rx="9" />
-        <rect x="128" y="64" width="18" height="32" rx="9" />
-      </g>
-      <text
-        x="172"
-        y="118"
-        className="fill-text"
-        textLength="372"
-        lengthAdjust="spacingAndGlyphs"
-        style={{
-          fontFamily:
-            "'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
-          fontSize: 120,
-          fontWeight: 800,
-          letterSpacing: "-2px",
-        }}
+      <img
+        src={appIcon}
+        alt=""
+        width={iconSize}
+        height={iconSize}
+        draggable={false}
+        className="shrink-0"
+      />
+      <span
+        className="font-extrabold tracking-tight text-text"
+        style={{ fontSize, lineHeight: 1 }}
       >
         {BRAND_NAME}
-      </text>
-    </svg>
+      </span>
+    </div>
   );
 };
 

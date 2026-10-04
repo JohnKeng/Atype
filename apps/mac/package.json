@@ -15,7 +15,9 @@
     "format:frontend": "prettier --write .",
     "format:backend": "cd src-tauri && cargo fmt",
     "test:keyboard": "bun src/lib/utils/keyboard.test.ts",
-    "app:install": "bash scripts/install-mac.sh"
+    "app:install": "bash scripts/install-mac.sh",
+    "icon:set": "bash scripts/set-icon.sh",
+    "icon:gen": "bun scripts/gen-icon.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.16",
@@ -56,6 +58,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-i18next": "^6.1.3",
     "prettier": "^3.6.2",
+    "sharp": "^0.34",
     "typescript": "~5.6.3",
     "vite": "^6.4.1"
   }

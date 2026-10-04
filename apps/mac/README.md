@@ -35,6 +35,30 @@ bun run app:install    # 編譯 release 版，裝到 /Applications/Atype.app 並
 
 後處理開著時，主熱鍵就會經過 LLM。LLM 超過 2.5 秒沒回應，就貼本機處理過的原文，不會卡住。
 
+**Dock**：設定完成後，Atype 開啟時只出現在選單列，不會出現在 Dock。從選單列圖示打開設定視窗時 Dock 才會暫時出現圖示，關掉視窗就消失。想每次開啟都顯示視窗，到「進階」關掉「隱藏啟動」。
+
+## 換 App 圖示
+
+圖示用你自己 CLIProxyAPI 的 GPT 生圖產生，風格對齊你其他 App（LogScope 的松鼠、Tako 的章魚、Omi Ear 的蝙蝠）。
+
+```bash
+cd apps/mac
+export CLIPROXY_BASE_URL=http://127.0.0.1:8317     # 你的 CLIProxyAPI 位址
+export CLIPROXY_API_KEY=你在 CLIProxyAPI 設定的 api-key
+bun run icon:gen                 # 產生 3 張大象候選，存到 ~/Desktop/atype-icons
+bun run icon:gen owl 4           # 或貓頭鷹 4 張；meerkat 是狐獴
+bun run icon:gen elephant 2 --ref ~/Desktop/tako.png   # 照某張既有圖示的畫風重畫
+bun run icon:set ~/Desktop/atype-icons/<選中的檔案>.png  # 裁成 macOS 圓角、加陰影、換掉所有圖示
+bun run app:install
+```
+
+- 模型預設 `gpt-image-2`，可用 `ATYPE_ICON_MODEL` 改成你 `/v1/models` 列出的圖像模型。
+- 想拿既有 App 的圖示當參考：`sips -s format png "/Applications/Tako.app/Contents/Resources/$(defaults read /Applications/Tako.app/Contents/Info CFBundleIconFile | sed 's/\.icns$//').icns" --out ~/Desktop/tako.png`
+- 已經是完整圓角圖示的圖片用 `bun run icon:set --as-is <檔案>`。
+- `icon:set` 同時更新 App 圖示與 App 內左上角的 logo；選單列的小圖示維持單色剪影（macOS 規定）。
+- 換完 Finder 或 Dock 還是舊圖時：`killall Dock`。
+- 提示詞在 `scripts/icon-prompts.ts`，可以直接改。
+
 ## 資料放在哪
 
 | 東西 | 位置 |

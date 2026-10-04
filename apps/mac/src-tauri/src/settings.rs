@@ -554,6 +554,8 @@ fn default_translate_to_english() -> bool {
 }
 
 fn default_start_hidden() -> bool {
+    // A fresh install must show the window for permissions and model setup;
+    // atype::defaults switches to menu-bar-only once a model is chosen.
     false
 }
 
