@@ -4,12 +4,22 @@
 // and add the soft drop shadow macOS icons carry.
 //
 //   bun scripts/make-icon.ts <input image> <output.png>
+//   bun scripts/make-icon.ts --on-grid <input image> <output.png>
+//
+// --on-grid: the image is already a macOS-style icon laid out on Apple's grid
+// (rounded tile at 100..924 of 1024) but flattened onto an opaque background,
+// e.g. a JPG export. The tile is cut out in place instead of cover-cropping
+// the whole picture, so its own rounded edge is not framed a second time.
 
 import sharp from "sharp";
 
-const [input, output] = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const onGrid = argv[0] === "--on-grid";
+const [input, output] = onGrid ? argv.slice(1) : argv;
 if (!input || !output) {
-  console.error("用法：bun scripts/make-icon.ts <輸入圖片> <輸出.png>");
+  console.error(
+    "用法：bun scripts/make-icon.ts [--on-grid] <輸入圖片> <輸出.png>",
+  );
   process.exit(2);
 }
 
@@ -29,8 +39,16 @@ const shadowSvg = Buffer.from(
     `fill="#000" fill-opacity="0.28"/></svg>`,
 );
 
-const body = await sharp(input)
-  .resize(BODY, BODY, { fit: "cover", position: "centre" })
+const source = onGrid
+  ? sharp(
+      await sharp(input)
+        .resize(SIZE, SIZE, { fit: "fill" })
+        .extract({ left: INSET, top: INSET, width: BODY, height: BODY })
+        .toBuffer(),
+    )
+  : sharp(input).resize(BODY, BODY, { fit: "cover", position: "centre" });
+
+const body = await source
   .ensureAlpha()
   .composite([{ input: tileMask, blend: "dest-in" }])
   .png()

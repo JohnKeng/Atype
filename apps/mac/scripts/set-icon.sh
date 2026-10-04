@@ -8,10 +8,14 @@ set -euo pipefail
 # By default the image is treated as a full-bleed illustration (what
 # `bun run icon:gen` produces) and cut into the macOS rounded tile with a
 # shadow by scripts/make-icon.ts. Pass --as-is for an already finished icon.
+# Pass --on-grid for a finished icon flattened onto a white/opaque background
+# (e.g. a JPG of a rounded icon): the tile is cut out in place.
 AS_IS=0
+MODE=""
 if [ "${1:-}" = "--as-is" ]; then AS_IS=1; shift; fi
+if [ "${1:-}" = "--on-grid" ]; then MODE="--on-grid"; shift; fi
 SRC="${1:-}"
-[ -n "$SRC" ] && [ -f "$SRC" ] || { echo "用法：bun run icon:set [--as-is] <圖片.png>" >&2; exit 1; }
+[ -n "$SRC" ] && [ -f "$SRC" ] || { echo "用法：bun run icon:set [--as-is | --on-grid] <圖片>" >&2; exit 1; }
 SRC="$(cd "$(dirname "$SRC")" && pwd)/$(basename "$SRC")"
 cd "$(dirname "$0")/.."
 
@@ -25,7 +29,7 @@ if [ "$AS_IS" = 1 ]; then
     cp "$SRC" "$TMP/source.png"
   fi
 else
-  bun scripts/make-icon.ts "$SRC" "$TMP/source.png" >/dev/null
+  bun scripts/make-icon.ts $MODE "$SRC" "$TMP/source.png" >/dev/null
 fi
 
 bunx tauri icon "$TMP/source.png" -o "$TMP/icons" >/dev/null

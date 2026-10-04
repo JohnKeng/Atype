@@ -54,7 +54,8 @@ bun run app:install
 
 - 模型預設 `gpt-image-2`，可用 `ATYPE_ICON_MODEL` 改成你 `/v1/models` 列出的圖像模型。
 - 想拿既有 App 的圖示當參考：`sips -s format png "/Applications/Tako.app/Contents/Resources/$(defaults read /Applications/Tako.app/Contents/Info CFBundleIconFile | sed 's/\.icns$//').icns" --out ~/Desktop/tako.png`
-- 已經是完整圓角圖示的圖片用 `bun run icon:set --as-is <檔案>`。
+- 已經是完整圓角圖示、四角透明的 PNG 用 `bun run icon:set --as-is <檔案>`。
+- 已經是圓角圖示但四周是白底（例如 JPG）用 `bun run icon:set --on-grid <檔案>`，會照 macOS 圖示網格把圓角框挖出來。目前的鸚鵡圖示就是這樣做的，原圖在 `design/atype-icon-source.jpg`。
 - `icon:set` 同時更新 App 圖示與 App 內左上角的 logo；選單列的小圖示維持單色剪影（macOS 規定）。
 - 換完 Finder 或 Dock 還是舊圖時：`killall Dock`。
 - 提示詞在 `scripts/icon-prompts.ts`，可以直接改。
