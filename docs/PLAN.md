@@ -1,201 +1,79 @@
-# Atype 自用版執行方案（Mac + iPhone）
+# Atype 計畫
 
-更新：2026-10-02。範圍：**純自用、不給別人用、暫時只做 macOS 與 iPhone**。
-商用版（多人、五平台、後端、收款、上架）的完整方案保留在 [`design/final-plan-v2.md`](design/final-plan-v2.md)（v1 與其批評在同目錄），作為日後擴張的參考；本文件只保留自用需要的部分。
+更新：2026-10-04。範圍：**純自用、只做 Mac 與 iPhone**。沒有後端、帳號、收費、上架。
 
-研究依據：[`research/`](research/README.md) 11 份報告與 [`research/_verification.md`](research/_verification.md)。標 ⚠ 的數字來自二手來源，動手時再核一次。
+## 現況
 
----
-
-## 0. 自用改變了什麼
-
-| 商用版要做 | 自用版 | 理由 |
-|---|---|---|
-| Cloudflare Worker + Durable Object 中繼、Supabase 帳號 | **不做**。API key 放本機 Keychain，客戶端直接呼叫供應商 | 中繼存在的理由是「key 不下發、計量、配額」，自用不需要 |
-| Paddle / RevenueCat / 配額 / 公平使用 | **不做** | 沒有收費 |
-| App Store 上架、4.4.1 / 5.1.2 審查、隱私政策、Privacy Manifest | **不做**。Xcode 直接裝到自己的 iPhone | 不上架就沒有審查 |
-| 200 句黃金集 + CI PR gate | **縮成 50 句個人測試句**，手動跑 | 你只需要對自己的口音、術語準 |
-| Windows / Android / Linux | **不做** | 範圍外 |
-| 跨裝置同步（Postgres） | iCloud Key-Value Store 同步詞典與 prompt | Apple 平台現成、零後端 |
-| 三級隱私文案 | 一條原則：**預設本地辨識；要上雲時只有你自己知道** | 自己對自己負責 |
-
-核心管線不變：**熱鍵 → 錄音 → STT（本地優先）→ OpenCC 繁體化 → LLM 整理（zh-TW prompt）→ pangu 空格 / 全形標點 → 貼上 / 插字**。
-
----
-
-## 1. 第 0 天：先不寫程式，今天就能用
-
-### 1.1 Mac：Handy + SenseVoice + 自己的 LLM key
-
-Handy（https://github.com/cjpais/Handy ，MIT，Tauri 2 + Rust）已經做好：Fn / 純修飾鍵全域熱鍵（`handy-keys`）、收據式剪貼簿貼上、Secure Input 偵測、底部 HUD、SQLite 歷史、繁簡轉換（`ferrous-opencc`，v0.9.8 起是獨立設定）、OpenAI 相容的 LLM 後處理、Apple Intelligence 本地整理。
-
-1. 下載安裝（或 `brew install --cask handy`），授權 Microphone 與 Accessibility。
-2. **模型**：選 **SenseVoice-Small**（zh / yue / en / ja / ko，非自迴歸、純 CPU 即時、AISHELL-1 CER 2.96）。不要選 Parakeet（沒有中文）、不要選 Whisper turbo（簡繁混出、幻覺多）。
-3. **熱鍵**：Fn 按住說話（`HoldOrToggle`）。若「系統設定 → 鍵盤 → 按下 🌐 鍵時」是「開始聽寫」，改成「不執行任何操作」，否則 Fn 會先被系統攔走。外接非 Apple 鍵盤沒有 Fn 事件，改 Right Option。
-4. **後處理**：Settings → Post-processing → 端點填 OpenAI 相容 URL：
-   - Gemini：`https://generativelanguage.googleapis.com/v1beta/openai/`，model `gemini-3.1-flash-lite`（2.5 Flash-Lite 於 2026-10-16 關閉，不要用）
-   - Claude：Anthropic 有 OpenAI 相容端點 ⚠（若 Handy 版本不支援，改用 §2 的 fork 直接接 Messages API），model `claude-haiku-4-5`
-   - Prompt 貼 §4 的 zh-TW 版本。
-5. **繁簡轉換**：Advanced（進階）→「繁簡轉換」選「繁體」。（若直接 build `apps/mac` 的 Atype，這一步與第 4 步的 prompt 都已是預設。）v0.9.8（2026-10-03）起這是獨立於辨識語言的設定，系統語系是 zh-TW 時預設就是繁體；它用 OpenCC `s2tw` 只轉字、不轉台灣用語，所以「軟件 → 軟體」這類仍靠 prompt 或 §2 fork 的 `s2twp` 後置。
-6. 填入個人詞典（Handy v0.9.6 起自訂詞彙不限空白，但它的模糊比對只支援 ASCII；中文詞條靠 prompt 的 `<known_terms>` 區塊）。
-
-這一步做完，Mac 端的體驗已經接近 Typeless：按住 Fn 說「幫我跟 team 說一下 PR 我已經 merge 了然後 staging 的 API 大概十分鐘後會 deploy 完」，放開後貼出「幫我跟 team 說一下，PR 我已經 merge 了，staging 的 API 大概 10 分鐘後會 deploy 完。」
-
-### 1.2 iPhone：先用「捷徑」頂一下
-
-在寫 App 之前，用 iOS 捷徑做一個零程式碼版本：
-「聽寫文字」動作（系統聽寫，iOS 26 起本地模型）→「取得 URL 內容」POST 到 Gemini / Claude API（key 放在捷徑裡，自用可接受）→「拷貝到剪貼簿」→ 綁到 Action Button 或返回點按。
-缺點：系統聽寫不去贅詞、每次要手動貼上、沒有即時字幕。這就是 §3 要解決的事。
-
----
-
-## 2. Mac：從 Handy fork 出自己的版本
-
-什麼時候需要 fork：想用 macOS 26/27 的 Apple `SpeechTranscriber`（zh_TW、零模型下載、原生串流）、想直接接 Claude Messages API（prompt cache、`temperature: 0`）、想做拼音別名詞典、想改 HUD。
-
-### 2.0 Handy 還值得當底嗎（2026-10-03 直接讀 git 歷史查核）
-
-| 項目 | 事實 |
+| 部分 | 狀態 |
 |---|---|
-| 年齡 | 首個 commit 2025-02-03，不到兩年 |
-| 最新版 | v0.9.8，2026-10-03；2026-02 起 8 個月出了 25 版以上，約兩週一版 |
-| 近三個月 commit | 2026-07 85、08 68、09 33（2026-05 / 06 曾安靜兩個月，各 4 / 9） |
-| 貢獻者 | 歷史 171 人；近半年主要作者 CJ Pais 104 個 commit，其餘多為單次貢獻 |
-| 依賴 | Tauri 2.11.5、`transcribe-rs` 0.3.8、`handy-keys` 0.3.4、`ort` 2.0.0-rc.12，都是現行版本 |
-| 最近與我們相關的改動 | v0.9.8 新增獨立的「繁簡轉換」設定（`chinese_script.rs`，國語用 `s2tw`、粵語用 `s2hk`）；v0.9.6 自訂詞彙放寬 |
+| Mac App（[`apps/mac`](../apps/mac/README.md)） | **可以用**。熱鍵錄音、本機辨識、LLM 整理、繁體與排版、貼上、第二大腦都已接好。正在日常試用 |
+| iPhone App | 尚未開始（見下方「iPhone」） |
 
-結論：它不是老專案，是一個單一主要維護者、社群貢獻活躍、節奏很快的專案。真正的風險有兩個：(1) **bus factor = 1**，CJ Pais 停手專案就會慢下來，但 MIT 授權加上我們只用它的殼，就算停更，熱鍵、貼上、HUD 這些已經穩定的部分照樣能用；(2) **上游動得太快**，fork 後每兩週就分岔一次。對策是下面 2.2 的原則：只改四處、不碰熱鍵 / 貼上 / Secure Input / HUD，改動盡量放在新檔案與最少的掛鉤點，上游每出一個 tag 就 `git merge` 一次，衝突面小就不痛。
+## 已定的決策
 
-### 2.1 建置
+- **桌面殼用 Handy**（MIT，Tauri 2 + Rust）：熱鍵、錄音、可靠貼上、Secure Input、浮窗、模型下載。Atype 自己的邏輯全部放在 `apps/mac/src-tauri/src/atype/`，對殼的程式碼只留幾行掛鉤。不定期跟上游同步，只在需要時挑單一修正搬過來。
+- **辨識在本機**：預設 SenseVoice Small（GGUF，約 240 MB，Apple Silicon 走 Metal）。對照組 Qwen3-ASR 0.6B。之後加 macOS 26+ 的 Apple `SpeechTranscriber`。
+- **整理用雲端 LLM**：預設 Gemini 3.1 Flash-Lite，備選 Claude Haiku 4.5。只送文字，不送音訊、視窗標題或網址。超過 2.5 秒沒回來就貼本機處理過的原文。
+- **繁體與排版不靠 LLM**：確定性中文層（OpenCC `s2twp` 閘門、全形標點、中英空格）每次都跑。
+- **第二大腦**：每一筆輸入都追加到 `atype.jsonl` 和每日 Markdown，預設放 iCloud Drive 的 `Atype/brain`。
+- **主熱鍵就是全部**：按住 Option + Space 說話、放開貼上；有開後處理就自動經過 LLM。
 
-fork 已經在這個 repo 的 [`apps/mac`](../apps/mac/README.md)：Handy v0.9.8 用 `git subtree` 匯入，剔除了 24 個介面語言、Windows / Linux 打包、自動更新（原本會從上游 Releases 把 fork 蓋回 Handy）、上游 CI / Nix / 測試 / 贊助素材，並套上 Atype 預設：中文模型白名單（SenseVoice Small 推薦）、供應商只留 Gemini / Anthropic / Groq / Apple Intelligence / Custom、預設 prompt 為 §4.2、繁簡轉換預設繁體。刪了什麼、改了什麼、怎麼跟上游，都在該目錄的 README。**2026-10-03 已完成**：§2.2 (c) 的確定性層（`s2twp` 閘門 + 全形標點 + pangu）、LLM 2.5 秒時間預算、第二大腦 JSONL / Markdown sink、`--polish` CLI，全部在 `apps/mac/src-tauri/src/atype/`，289 個測試通過。
+## 管線
 
-```bash
-cd apps/mac
-bun install && bun run tauri dev      # 先確認在 macOS 27 能跑、Fn 與貼上正常
-bun run tauri build                   # Atype.app / .dmg
-# 跟上游：git subtree pull --prefix=apps/mac https://github.com/cjpais/Handy v0.9.9 --squash
+```mermaid
+flowchart LR
+  K[按住熱鍵] --> R[錄音]
+  R --> S[本機辨識<br/>SenseVoice Small]
+  S --> L{LLM 整理<br/>Gemini · 2.5 秒預算}
+  L -->|回來| Z[確定性中文層<br/>s2twp · 全形標點 · 中英空格]
+  L -->|逾時或失敗| Z
+  Z --> P[貼到目前的 App]
+  Z --> H[(歷史紀錄)]
+  H --> B[[第二大腦<br/>atype.jsonl · 每日 .md]]
 ```
 
-Handy 目前鎖 `tauri = "2.11.5"`、`tauri-nspanel` 走 git branch `v2.1`；先在這個版本上改，不要急著升 Tauri 2.12。簽章：自用可以 ad-hoc，但每次重 build 後 Accessibility 授權會「看似有效實則失效」（`AXIsProcessTrusted()` 回 true 但 tap 已死），用固定的 Developer ID 或自簽憑證簽章可避免每次重授權。
+## 接下來（依序）
 
-### 2.2 要改的四個地方（依序）
+1. **日常試用一週**，同時錄下方的 50 句測試句，決定 STT（SenseVoice 對 Qwen3-ASR）與 LLM（Gemini 對 Haiku）。
+2. **裝成正式 App**：`cd apps/mac && bun run app:install`，之後不用再開終端機。
+3. **拼音別名詞典**：人名、產品名的同音錯字修正（無聲調拼音、音節級比對，只替換自己加的詞），詞條同時餵進 prompt 的 `<known_terms>`。
+4. **Atype 設定頁**：在 App 裡改第二大腦資料夾、LLM 時間預算、詞典，不用手改 `atype.json`。
+5. **Apple `SpeechTranscriber` 引擎**（macOS 26+，zh_TW、零下載、輸出就是繁體）。
+6. **iPhone App**。
+7. **第二大腦的用法**：全文搜尋、每日摘要、匯出到筆記工具。
 
-**(a) STT 引擎：加 Apple `SpeechTranscriber`（macOS 26+）**
-Handy 已有 Swift FFI 範例（`src-tauri/swift/apple_intelligence.swift`，`@_cdecl` + swift-rs），照同一模式加 `AppleSpeech.swift`：
+## iPhone
 
-```swift
-import Speech
-@available(macOS 26, *)
-final class AppleSpeech {
-    static let shared = AppleSpeech()
-    private var analyzer: SpeechAnalyzer?; private var transcriber: SpeechTranscriber?
-    private var input: AsyncStream<AnalyzerInput>.Continuation?
-    func start(onText: @escaping (String, Bool) -> Void) async throws {
-        let t = SpeechTranscriber(locale: Locale(identifier: "zh_TW"), transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: [])
-        if let req = try await AssetInventory.assetInstallationRequest(supporting: [t]) { try await req.downloadAndInstall() }  // 首次下載到系統空間
-        let a = SpeechAnalyzer(modules: [t]); let (stream, cont) = AsyncStream<AnalyzerInput>.makeStream(); input = cont
-        try await a.start(inputSequence: stream); analyzer = a; transcriber = t
-        Task { for try await r in t.results { onText(String(r.text.characters), r.isFinal) } }
-    }
-    func feed(_ buf: AVAudioPCMBuffer) { input?.yield(AnalyzerInput(buffer: buf)) }
-    func stop() async throws { input?.finish(); try await analyzer?.finalizeAndFinishThroughEndOfInput() }
-}
-```
-
-Rust 側實作 Handy 的引擎 trait，把 cpal 的 16 kHz PCM 轉成 `AVAudioPCMBuffer` 餵進去（格式用 `SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith:)` 查）。中文 CER 第三方測約 7.97（與 Whisper turbo 持平），比 SenseVoice 略差但零下載、原生串流、輸出就是繁體；兩個都留著，設定頁切換。
-
-**(b) LLM：直接接 Claude Messages API（或 Gemini），不經 OpenAI 相容層**
-在 `llm_client.rs` 旁加一個 `anthropic.rs`：
-
-```rust
-// POST https://api.anthropic.com/v1/messages
-// headers: x-api-key（從 Keychain 讀）、anthropic-version: 2023-06-01
-let body = json!({
-  "model": "claude-haiku-4-5",
-  "max_tokens": 256 + 2 * estimate_tokens(&transcript),
-  "temperature": 0,
-  "system": [
-    { "type": "text", "text": STABLE_PROMPT, "cache_control": { "type": "ephemeral" } },   // Haiku 4.5 要 ≥ 4,096 token 才會 cache；自用量小，cache 不命中也無所謂
-    { "type": "text", "text": known_terms_block }
-  ],
-  "messages": [{ "role": "user", "content": format!("<transcript>\n{}\n</transcript>", transcript) }]
-});
-// 逾時 2.5 s → 直接貼 OpenCC 後的原文；stop_reason == "max_tokens" 也貼原文
-```
-
-Gemini 走 Handy 原本的 OpenAI 相容路徑即可。兩家都接上，設定頁一鍵切換，用 §5 的測試句比一週。
-
-**(c) 確定性層：OpenCC 前後各一次 + pangu + 全形標點**
-Handy 的 OpenCC 只在 ASR 之後做一次；LLM 也可能吐簡體，所以在 LLM 輸出後再跑一次 `S2twp`（gate：偵測到簡體專有字才轉，避免誤轉日文漢字），再接 pangu 中英空格（code 模式關閉）與全形標點正規化。詞典條目先用占位符保護再轉，免得「軟件」這種你刻意說的詞被改。
-
-**(d) 中文詞典：拼音別名**
-Handy 的模糊比對是 Soundex / Levenshtein，只支援 ASCII。中文改成「無聲調拼音、音節級比對」：≤ 2 字要完全相同音節才替換、≥ 3 字允許 1 音節差；只對你手動加的詞做替換。Rust 用 `pinyin` crate。詞典與 prompt 存成一個 JSON，放 iCloud Drive 讓 iPhone 共用。
-
-### 2.3 不要碰的地方
-
-熱鍵狀態機、`paste_tx` 收據式貼上、`secure_input.rs`、`overlay.rs`——這些是 Handy 最難、最常壞的部分，已經有 32k★ 的社群在踩坑，照用。
-
----
-
-## 3. iPhone：一個小 Swift App（不上架）
-
-### 3.1 架構
-
-iOS 鍵盤 extension 不能錄音（Apple 文件與 2026 年開源專案實測一致，Full Access 也不行），所以不管自用與否都是：
+iOS 鍵盤 extension 不能錄音（Full Access 也不行），記憶體上限約 30–60 MB，所以 iPhone 版是一個小的主 App 負責錄音與辨識：
 
 ```
-Action Button / Control Center（AudioRecordingIntent + Live Activity）
+Action Button / 控制中心（AudioRecordingIntent + Live Activity）
   → 主 App 錄音（AVAudioSession .playAndRecord，UIBackgroundModes: audio）
-  → SpeechTranscriber(zh_TW) 本地辨識（iOS 26+；你的 iPhone 已是 27）
-  → OpenCC → LLM（直接呼叫 Gemini / Claude）→ pangu / 標點
-  → 放剪貼簿 + Live Activity 顯示「已複製」；（選配）鍵盤 extension 從 App Group 讀取並 insertText
+  → SpeechTranscriber(zh_TW) 本機辨識
+  → LLM 整理 → 確定性中文層 → 剪貼簿（+ 第二大腦）
+  →（選配）鍵盤 extension 從 App Group 讀結果並 insertText
 ```
 
-自用最省事的入口是 **Action Button**：在任何 App 裡按住 Action Button 說話，放開後文字已在剪貼簿，長按輸入框貼上。不需要切換鍵盤、不需要 Full Access。鍵盤 extension 留到第 3–4 週再做，模板用 Dictus（https://github.com/getdictus/dictus-ios ，MIT：App + Keyboard + App Group + Darwin notification 全套）。
+- 最省事的入口是 Action Button：在任何 App 按住說話，放開後文字已在剪貼簿。鍵盤 extension 之後再做，模板用 Dictus（MIT）。
+- `AVAudioSession` 的 category 要在前景設定一次；`AudioRecordingIntent` 必須同時啟動 Live Activity，intent 放在 App target。第一個真機測試就驗這兩件。
+- 沒網路時用 Apple Foundation Models 離線整理（prompt 壓到 300 token 內）。
+- 建議加入 Apple Developer Program（US$99/年）：簽章一年有效，App Groups、Live Activity、App Intents 不受限，Mac 版也能用固定簽章，免去每次重新編譯後重給輔助使用權限。
+- prompt、詞典、第二大腦資料夾與 Mac 共用（iCloud Drive）。
 
-### 3.2 工程事實（研究已確認）
+## 模型
 
-- `SpeechTranscriber.supportedLocales` 社群實測含 zh-TW / zh-HK / zh-CN / yue-CN；模型由 `AssetInventory` 下載到系統空間，不佔 App 體積。
-- `AVAudioSession` 的 category **必須在前景設定一次**；背景由 intent 冷啟動時 `AVAudioEngine.start()` 不能在非 active 狀態呼叫——Dictus 的作法是把請求 park 住、進 active 後再啟動並持有 background task。第一週就要在真機驗這條。
-- `AudioRecordingIntent`（iOS 18+）必須同時啟動 Live Activity，否則錄音會被系統停掉；intent 定義在 **App target**（widget 只引用），不要放在 widget extension。
-- 鍵盤 extension 記憶體上限約 30–60 MB、被殺沒有 crash log；鍵盤端不放任何模型。
-- Apple Foundation Models（iOS 26+、Apple Intelligence 機型）可做離線整理：context 4,096 token 含輸出，system prompt 要壓到 300 token 以內；zh-TW 支援用 `supportsLocale` 執行期檢查。沒網路時用它，有網路用雲端 LLM。
-
-### 3.3 簽章與安裝
-
-- 免費 Apple ID：可裝到自己的 iPhone，但 7 天到期要重簽、同時最多 3 個 App；App Groups 等能力是否可用 ⚠ 需在 Xcode 試。
-- **建議花 US$99 加入 Developer Program**：簽章一年有效、可用 TestFlight 給自己、App Groups / Live Activity / App Intents 都沒有限制，也省掉 Mac 端重 build 的 Accessibility 授權問題（用 Developer ID 簽）。
-
-### 3.4 Xcode 專案骨架
-
-```
-AtypeiOS/
-├─ AtypeApp/            SwiftUI：DictationSession（AVAudioEngine + SpeechTranscriber）、Polish（OpenCC-Swift + LLM client）、
-│                       StartDictationIntent（AudioRecordingIntent）、LiveActivity、Settings（API key 進 Keychain、prompt、詞典）
-├─ AtypeWidgets/        ControlWidget（Action Button / Control Center）、Live Activity UI
-├─ AtypeKeyboard/       （第 3–4 週）UIInputViewController：麥克風鍵開主 App、Darwin observer、insertText
-└─ AtypeShared/         App Group keys、HandoffKeys、Normalize（pangu / 標點，與 Mac 共用同一份 fixtures）
-```
-
-Info.plist：`NSMicrophoneUsageDescription`、`UIBackgroundModes = [audio]`、URL scheme `atype`；App Group `group.<你的 bundle 前綴>.atype`。
-
----
-
-## 4. 模型與 prompt
-
-### 4.1 自用的選擇
-
-| 層 | 預設 | 備選 | 說明 |
+| 層 | 預設 | 備選 | 備註 |
 |---|---|---|---|
-| STT（Mac） | SenseVoice Small **GGUF**（Handy v0.9.8 目錄內建，Q8_0 約 240 MB，transcribe-cpp + Metal）；A/B 對象 Qwen3-ASR 0.6B GGUF（同目錄，30 語、Q8_0 約 811 MB）；之後加 Apple `SpeechTranscriber` zh_TW（§2.2a） | ElevenLabs Scribe v2 Realtime（自己的 key，普通話 CER 5.24% 商用最佳 ⚠） | 本地零成本且音訊不出機器；只有在安靜環境仍不準時才上雲 |
-| STT（iPhone） | Apple `SpeechTranscriber` zh_TW | 雲端（同上） | iPhone 不要跑第三方模型（體積、耗電） |
-| LLM 整理 | `gemini-3.1-flash-lite`（$0.25 / $1.50 per MTok，最快最便宜）或 `claude-haiku-4-5`（$1 / $5，指令遵守與防注入最穩） | Groq gpt-oss-20b（TTFT 0.1–0.3 s）；Apple Foundation Models（離線） | 兩家都申請 key，用 §5 測試句比一週：簡體 0、注入通過、延遲、改錯意思的次數 |
-| 繁簡 / 排版 | OpenCC s2twp + pangu + 全形標點（確定性） | — | 不靠 LLM「記得」 |
+| STT（Mac） | SenseVoice Small GGUF | Qwen3-ASR 0.6B GGUF；之後 Apple `SpeechTranscriber` | 都在本機，音訊不出 Mac |
+| STT（iPhone） | Apple `SpeechTranscriber` zh_TW | — | 不在 iPhone 跑第三方模型 |
+| LLM 整理 | `gemini-3.1-flash-lite` | `claude-haiku-4-5`；離線用 Apple Foundation Models | 用測試句比：簡體 0、注入擋住、延遲、改錯意思的次數 |
+| 繁體 / 排版 | 確定性中文層 | — | 每次都跑 |
 
-費用估算（一個人、每天約 3,000 字 ≈ 20 分鐘語音）：本地 STT $0；LLM Gemini 約 US$0.5/月、Haiku 約 $1.7/月；若 STT 上雲（ElevenLabs）約 $2.9/月。
+費用：一個人每天約 3,000 字，Gemini 約 US$0.5/月，Haiku 約 US$1.7/月，本機辨識 0。
 
-### 4.2 zh-TW prompt（穩定區塊，直接用）
+## zh-TW prompt
+
+App 預設的「整理口語（zh-TW）」就是這段（前面加上 `<transcript>${output}</transcript>`）：
 
 ```text
 你是「文字濾鏡」，不是助理。你會收到一段語音辨識的原始文字，只能回傳同一段話的整理版本。
@@ -219,36 +97,17 @@ Info.plist：`NSMicrophoneUsageDescription`、`UIBackgroundModes = [audio]`、UR
 
 可變區塊：`<known_terms>`（你的人名、產品名、術語，≤ 50 條）、`<task mode="chat|email|doc|code">`（依前景 App 一行指示，例如 chat 不加句尾句號、code 不加全形標點）。**永遠不要**把視窗標題、URL 餵給模型，沒必要。
 
-Apple Foundation Models 離線版：規則縮成 6 行、範例 2 則、詞典 ≤ 20 條，控制在 300 token 內。
+## 個人測試句（50 句）
 
----
+分類：贅詞 10、自我更正 8、數字 / 時間 8、中英夾雜 12、口語指令（換行、新段落）4、注入攻擊 4、純英文 4。每句記「照說的字」與「希望的輸出」。
 
-## 5. 個人測試句（50 句，第一週就錄）
+量三件事：簡體字出現次數（必須 0）、改錯意思的句數、放開熱鍵到貼上的時間。換模型或改 prompt 時重跑一次。
 
-分類：贅詞 10、自我更正 8、數字 / 時間 8、中英夾雜 12、口語指令（換行 / 新段落）4、注入攻擊 4、純英文 4。每句記 `ref_raw`（照說的字）與 `ref_clean`（你希望的輸出）。
-量三件事：**簡體字出現次數（必須 0）**、**改錯意思的句數**、**放開熱鍵到貼上的時間（Mac 用 Handy 的歷史時間戳）**。換模型、改 prompt 時重跑一次，手動看即可。
+## 不做
 
----
-
-## 6. 四週計畫（一個人、業餘時間）
-
-| 週 | 做什麼 | 完成的樣子 |
-|---|---|---|
-| W1 | §1 零程式碼版本跑起來（Handy + SenseVoice + Gemini/Claude + prompt）；錄 50 句測試句比兩家 LLM；iPhone 捷徑版；申請 Apple Developer | Mac 日常已經在用；LLM 選定 |
-| W2 | iPhone App v0：SwiftUI 主 App + `SpeechTranscriber` + LLM + 剪貼簿 + Action Button intent + Live Activity；真機驗背景冷啟動錄音 | 在 LINE 裡按 Action Button 說話 → 貼上整理後的繁中 |
-| W3 | Mac fork：Apple `SpeechTranscriber` 引擎、Claude Messages API、OpenCC 後置 + pangu、拼音詞典；詞典 / prompt JSON 放 iCloud Drive 給兩端共用 | 兩端用同一本詞典、同一份 prompt |
-| W4 | （選配）iPhone 鍵盤 extension（Dictus 模板）：麥克風鍵開主 App → 滑回 → 插字；離線時改走 Apple Foundation Models | 不想複製貼上時有鍵盤可用 |
-
----
-
-## 7. 不做
-
-- 後端、帳號、收費、上架、隱私政策、審查備註。
+- 後端、帳號、收費、上架、隱私政策。
 - Windows、Android、Linux。
-- 串流逐字寫進目標 App（HUD 預覽即可）。
-- iOS 自動跳回原 App、PiP keepalive、私有 API。
-- 自己訓練 / 微調 ASR。
+- 自己訓練或微調語音模型。
+- iOS 自動跳回原 App、私有 API。
 
-## 8. 日後若要變商品
-
-回到 [`design/final-plan-v2.md`](design/final-plan-v2.md)：需要補的是中繼（key 不下發、計量）、收款（Paddle + IAP）、上架（4.4.1 / 5.1.2(i)）、eval CI、Windows / Android。自用版的管線與 prompt 可以原封搬過去。
+更早的研究與商用版方案在 [`archive/`](archive/README.md)，不再維護。

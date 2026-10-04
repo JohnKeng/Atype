@@ -44,6 +44,7 @@ const HandyTextLogo = ({
           letterSpacing: "-2px",
         }}
       >
+        {/* eslint-disable-next-line i18next/no-literal-string */}
         Atype
       </text>
     </svg>

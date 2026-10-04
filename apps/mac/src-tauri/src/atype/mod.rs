@@ -10,6 +10,7 @@
 
 pub mod brain;
 pub mod config;
+pub mod defaults;
 pub mod zh_post;
 
 use crate::managers::model::ModelInfo;
@@ -23,6 +24,7 @@ pub fn main_hotkey_polishes(app: &AppHandle) -> bool {
 /// Everything Atype wires up at runtime. Called once after Handy's managers
 /// are registered.
 pub fn init(app: &AppHandle) {
+    defaults::apply_once(app);
     brain::init(app);
 }
 

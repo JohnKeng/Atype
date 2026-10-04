@@ -1,4 +1,3 @@
-use crate::utils;
 use log::{debug, warn};
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -567,7 +566,7 @@ fn default_update_checks_enabled() -> bool {
 }
 
 fn default_show_whats_new_on_update() -> bool {
-    true
+    false
 }
 
 fn default_whats_new_last_seen_version() -> String {
@@ -633,7 +632,8 @@ fn default_auto_submit() -> bool {
 }
 
 fn default_history_limit() -> usize {
-    5
+    // Atype: keep a useful history (upstream keeps 5). The second brain keeps everything.
+    300
 }
 
 fn default_recording_retention_period() -> RecordingRetentionPeriod {
@@ -1202,9 +1202,9 @@ fn apply_settings_migrations(
 /// `HANDY_DISABLE_UPDATER` is set — e.g. by the Nix package, since self-update
 /// can't work against an immutable /nix/store install.
 pub fn update_checks_forced_disabled() -> bool {
-    use std::sync::OnceLock;
-    static IS_UPDATER_DISABLED: OnceLock<bool> = OnceLock::new();
-    *IS_UPDATER_DISABLED.get_or_init(|| utils::env_flag_enabled("HANDY_DISABLE_UPDATER"))
+    // Atype: there is no updater (updates are `git pull` + `bun run app:install`),
+    // so update checks are always off and the tray menu item is removed.
+    true
 }
 
 /// Effective updater state: the user's stored preference, overridden to `false`

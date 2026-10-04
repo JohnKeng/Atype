@@ -27,6 +27,9 @@ pub struct AtypeConfig {
     /// Second-brain folder. `None` = iCloud Drive/Atype/brain on macOS when
     /// iCloud Drive exists, otherwise `<app data>/brain`. `~/` is expanded.
     pub brain_dir: Option<String>,
+    /// Which one-time Atype defaults have been applied to Handy's settings
+    /// (see `atype::defaults`). Managed by the app; leave it alone.
+    pub defaults_version: u32,
 }
 
 impl Default for AtypeConfig {
@@ -37,6 +40,7 @@ impl Default for AtypeConfig {
             llm_on_main_hotkey: true,
             brain_enabled: true,
             brain_dir: None,
+            defaults_version: 0,
         }
     }
 }
@@ -72,6 +76,24 @@ pub fn load(app: &AppHandle) -> AtypeConfig {
             }
             cfg
         }
+    }
+}
+
+/// Write `atype.json` (pretty JSON). Errors are logged, not returned.
+pub fn save(app: &AppHandle, cfg: &AtypeConfig) {
+    let Some(path) = path(app) else {
+        return;
+    };
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    match serde_json::to_string_pretty(cfg) {
+        Ok(text) => {
+            if let Err(e) = std::fs::write(&path, text + "\n") {
+                warn!("Atype: could not write {}: {}", path.display(), e);
+            }
+        }
+        Err(e) => warn!("Atype: could not serialize config: {}", e),
     }
 }
 

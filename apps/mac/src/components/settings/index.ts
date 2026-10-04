@@ -33,4 +33,3 @@ export { StartHidden } from "./StartHidden";
 export { HistoryLimit } from "./HistoryLimit";
 export { RecordingRetentionPeriodSelector } from "./RecordingRetentionPeriod";
 export { AutostartToggle } from "./AutostartToggle";
-export { ShowWhatsNewOnUpdate } from "./ShowWhatsNewOnUpdate";
