@@ -1,29 +1,31 @@
-/* Handy Colors */
+/* Atype colors: chrysanthemum gold (菊黃) on warm neutrals.
+   Contrast (WCAG): accent vs light bg 2.1 (fills, borders, rings — the old pink
+   was 1.9), dark-mode accent vs dark bg 9.7, white text on the deep accent 4.8. */
 
 :root {
   /* Palette source of truth. Each themed color is defined once as a
      light/dark pair; the active tokens below and the `data-theme` overrides
      in App.css reference these, so a hex value lives in exactly one place. */
-  --light-color-text: #0f0f0f;
-  --light-color-background: #fbfbfb;
-  --light-color-logo-primary: #faa2ca;
-  --light-color-logo-stroke: #382731;
+  --light-color-text: #1c1a16;
+  --light-color-background: #fbf8f1;
+  --light-color-logo-primary: #e3a008;
+  --light-color-logo-stroke: #3a2a0e;
 
-  --dark-color-text: #fbfbfb;
-  --dark-color-background: #2c2b29;
-  --dark-color-logo-primary: #f28cbb;
-  --dark-color-logo-stroke: #fad1ed;
+  --dark-color-text: #f6f2e8;
+  --dark-color-background: #24221e;
+  --dark-color-logo-primary: #f5c443;
+  --dark-color-logo-stroke: #fbe5a8;
 
   /* Semantic status colors. First used by SecureInputWarning; intended to
      replace the ad-hoc yellow-500/red-500 usages (e.g. ui/Alert.tsx) over
      time so status styling is themeable from one place. */
-  --light-color-warning: #d97706;
+  --light-color-warning: #c2410c;
   --light-color-error: #dc2626;
-  --dark-color-warning: #fbbf24;
+  --dark-color-warning: #fb923c;
   --dark-color-error: #f87171;
 
   /* Tokens that do not change between light and dark */
-  --color-background-ui: #da5893;
+  --color-background-ui: #9c6700;
   --color-text-stroke: #f6f6f6;
   --color-mid-gray: #808080;
 
