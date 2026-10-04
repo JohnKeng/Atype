@@ -629,7 +629,7 @@
       },
       "sourceCode": {
         "title": "Source Code",
-        "description": "View source code and contribute",
+        "description": "View the Atype source code",
         "button": "View on GitHub"
       },
       "supportDevelopment": {
@@ -643,6 +643,10 @@
           "title": "ggml",
           "description": "High-performance tensor library for on-device machine learning inference",
           "details": "Atype's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
+        },
+        "handy": {
+          "title": "Handy",
+          "description": "Atype's desktop shell (hotkeys, paste, overlay, model runtime) is based on Handy by CJ Pais, MIT licensed."
         }
       }
     }

@@ -71,7 +71,7 @@ cd src-tauri && cargo build && cargo test
 # 無頭辨識：模型放在資料目錄的 models/ 下，portable 模式時是 target/debug/Data/
 printf 'Handy Portable Mode' > target/debug/portable
 mkdir -p target/debug/Data/models/sense-voice-int8     # 放 model.int8.onnx + tokens.txt
-LD_LIBRARY_PATH=$ORT_LIB_LOCATION/lib xvfb-run -a target/debug/handy \
+LD_LIBRARY_PATH=$ORT_LIB_LOCATION/lib xvfb-run -a target/debug/atype \
   --transcribe-file zh.wav --model sense-voice-int8 --json
 ```
 

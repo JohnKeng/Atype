@@ -1,11 +1,11 @@
 [package]
-name = "handy"
-version = "0.9.8"
+name = "atype"
+version = "0.1.0"
 description = "Atype (fork of Handy)"
-authors = ["cjpais"]
+authors = ["John Keng", "cjpais (Handy)"]
 edition = "2021"
 license = "MIT"
-default-run = "handy"
+default-run = "atype"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

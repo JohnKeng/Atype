@@ -625,7 +625,7 @@
       },
       "sourceCode": {
         "title": "原始碼",
-        "description": "檢視原始碼並參與貢獻",
+        "description": "檢視 Atype 的原始碼",
         "button": "在 GitHub 上檢視"
       },
       "supportDevelopment": {
@@ -639,6 +639,10 @@
           "title": "ggml",
           "description": "針對 OpenAI Whisper 自動語音辨識模型的高效能推理引擎",
           "details": "Atype 使用 ggml 進行快速的本機語音轉文字處理。感謝 Georgi Gerganov 和貢獻者們的傑出工作"
+        },
+        "handy": {
+          "title": "Handy",
+          "description": "Atype 的桌面殼（熱鍵、貼上、浮窗、模型執行）基於 CJ Pais 的 Handy，MIT 授權。"
         }
       },
       "whatsNewUpdates": {
