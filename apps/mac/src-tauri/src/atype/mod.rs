@@ -15,6 +15,11 @@ pub mod zh_post;
 use crate::managers::model::ModelInfo;
 use tauri::AppHandle;
 
+/// Whether the plain "transcribe" hotkey should also run LLM post-processing.
+pub fn main_hotkey_polishes(app: &AppHandle) -> bool {
+    crate::settings::get_settings(app).post_process_enabled && config::load(app).llm_on_main_hotkey
+}
+
 /// Everything Atype wires up at runtime. Called once after Handy's managers
 /// are registered.
 pub fn init(app: &AppHandle) {

@@ -653,7 +653,8 @@ fn default_theme() -> Theme {
 }
 
 fn default_post_process_enabled() -> bool {
-    false
+    // Atype: LLM cleanup is the point; with no key/model it is skipped anyway.
+    true
 }
 
 fn default_app_language() -> String {

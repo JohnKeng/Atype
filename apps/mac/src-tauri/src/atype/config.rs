@@ -19,6 +19,9 @@ pub struct AtypeConfig {
     /// Time budget for the LLM. When it is exceeded the deterministic result
     /// of the raw transcription is pasted instead of waiting.
     pub llm_timeout_ms: u64,
+    /// The main hotkey (not only the separate post-process hotkey) runs the
+    /// LLM whenever post-processing is enabled in Advanced settings.
+    pub llm_on_main_hotkey: bool,
     /// Append every transcription to the second-brain folder.
     pub brain_enabled: bool,
     /// Second-brain folder. `None` = iCloud Drive/Atype/brain on macOS when
@@ -31,6 +34,7 @@ impl Default for AtypeConfig {
         Self {
             zh_post_enabled: true,
             llm_timeout_ms: 2500,
+            llm_on_main_hotkey: true,
             brain_enabled: true,
             brain_dir: None,
         }

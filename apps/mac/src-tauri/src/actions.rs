@@ -624,7 +624,9 @@ impl ShortcutAction for TranscribeAction {
         play_feedback_sound(app, SoundType::Stop);
 
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
-        let post_process = self.post_process;
+                                                 // Atype: the main hotkey also polishes with the LLM when post-processing
+                                                 // is on (atype.json `llm_on_main_hotkey`), like Typeless.
+        let post_process = self.post_process || crate::atype::main_hotkey_polishes(app);
         let cancel_generation = rm.cancel_generation();
 
         tauri::async_runtime::spawn(async move {
