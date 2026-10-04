@@ -774,6 +774,11 @@ pub fn run(cli_args: CliArgs) {
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
             helpers::clamshell::is_laptop,
+            atype::commands::get_atype_config,
+            atype::commands::set_atype_config,
+            atype::commands::get_atype_stats,
+            atype::commands::open_brain_dir,
+            atype::commands::atype_polish,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,

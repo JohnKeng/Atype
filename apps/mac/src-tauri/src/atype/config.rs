@@ -1,16 +1,17 @@
 //! Atype's own settings, kept in a separate `atype.json` next to Handy's
 //! settings store so Handy's `AppSettings` struct never has to change.
 //! The file is created with defaults on first use; edit it by hand or through
-//! the (future) Atype settings page.
+//! the Atype settings page (`atype::commands`).
 
 use log::warn;
 use serde::{Deserialize, Serialize};
+use specta::Type;
 use std::path::PathBuf;
 use tauri::AppHandle;
 
 pub const FILE_NAME: &str = "atype.json";
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
 #[serde(default)]
 pub struct AtypeConfig {
     /// Run the deterministic Chinese layer (OpenCC s2twp gate, full-width

@@ -11,6 +11,7 @@
   },
   "sidebar": {
     "general": "General",
+    "atype": "Personal",
     "models": "Models",
     "advanced": "Advanced",
     "postProcessing": "Post Process",
@@ -207,6 +208,61 @@
           "push_to_talk": "Records while you hold the shortcut",
           "toggle": "Tap the shortcut to start recording, tap again to stop"
         }
+      }
+    },
+    "atype": {
+      "usage": {
+        "title": "My Usage",
+        "description": "Counted from your second brain",
+        "today": "Today",
+        "week": "This Week",
+        "total": "All Time",
+        "chars": "characters",
+        "entries": "entries"
+      },
+      "brain": {
+        "title": "Second Brain",
+        "enabled": {
+          "label": "Save to Second Brain",
+          "description": "Append every dictation to a daily Markdown log and atype.jsonl in this folder"
+        },
+        "folder": {
+          "title": "Folder",
+          "description": "Defaults to Atype/brain in iCloud Drive, or the app data folder without iCloud",
+          "default": "Default location"
+        },
+        "choose": "Choose Folder",
+        "reveal": "Show in Finder",
+        "useDefault": "Use Default",
+        "dialogTitle": "Choose a second brain folder"
+      },
+      "cleanup": {
+        "title": "Cleanup",
+        "mainHotkey": {
+          "label": "AI Cleanup on Main Hotkey",
+          "description": "When post-processing is on, the main hotkey also runs the AI cleanup"
+        },
+        "timeout": {
+          "label": "LLM Time Budget",
+          "description": "If the AI takes longer than this, the formatted raw text is pasted instead",
+          "value": "{{seconds}} s"
+        },
+        "zhPost": {
+          "label": "Chinese Formatting (Traditional, full-width punctuation, spacing)",
+          "description": "Convert to Taiwan Traditional Chinese, use full-width punctuation and add spaces between Chinese and Latin text"
+        }
+      },
+      "tryIt": {
+        "title": "Try It",
+        "input": "Text",
+        "placeholder": "Paste some Chinese text",
+        "button": "Apply Chinese Formatting",
+        "result": "Result"
+      },
+      "errors": {
+        "save": "Could not save: {{error}}",
+        "open": "Could not open folder: {{error}}",
+        "polish": "Formatting failed: {{error}}"
       }
     },
     "models": {

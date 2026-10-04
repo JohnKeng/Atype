@@ -11,6 +11,7 @@
   },
   "sidebar": {
     "general": "一般",
+    "atype": "個人化",
     "models": "模型",
     "advanced": "進階",
     "postProcessing": "後處理",
@@ -207,6 +208,61 @@
           "push_to_talk": "按住快捷鍵期間錄音",
           "toggle": "輕按快捷鍵開始錄音，再次輕按停止"
         }
+      }
+    },
+    "atype": {
+      "usage": {
+        "title": "我的使用量",
+        "description": "依第二大腦的紀錄計算",
+        "today": "今天",
+        "week": "本週",
+        "total": "全部",
+        "chars": "字數",
+        "entries": "筆數"
+      },
+      "brain": {
+        "title": "第二大腦",
+        "enabled": {
+          "label": "寫入第二大腦",
+          "description": "每次聽寫都會附加到這個資料夾的每日 Markdown 和 atype.jsonl"
+        },
+        "folder": {
+          "title": "資料夾",
+          "description": "預設是 iCloud 雲碟的 Atype/brain；沒有 iCloud 時放在 App 資料夾",
+          "default": "預設位置"
+        },
+        "choose": "選擇資料夾",
+        "reveal": "在 Finder 中打開",
+        "useDefault": "用預設位置",
+        "dialogTitle": "選擇第二大腦資料夾"
+      },
+      "cleanup": {
+        "title": "整理",
+        "mainHotkey": {
+          "label": "主熱鍵也用 AI 整理",
+          "description": "開啟「後處理」時，主熱鍵也會讓 AI 整理文字"
+        },
+        "timeout": {
+          "label": "LLM 時間預算",
+          "description": "AI 超過這個時間就直接貼上排版後的原文",
+          "value": "{{seconds}} 秒"
+        },
+        "zhPost": {
+          "label": "中文排版（繁體、全形標點、中英空格）",
+          "description": "轉成台灣繁體、改用全形標點，並在中英文之間加空格"
+        }
+      },
+      "tryIt": {
+        "title": "試試看",
+        "input": "原文",
+        "placeholder": "貼上一段中文",
+        "button": "套用中文排版",
+        "result": "結果"
+      },
+      "errors": {
+        "save": "儲存失敗：{{error}}",
+        "open": "無法打開資料夾：{{error}}",
+        "polish": "排版失敗：{{error}}"
       }
     },
     "models": {

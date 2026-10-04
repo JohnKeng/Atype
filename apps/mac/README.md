@@ -46,9 +46,9 @@ bun run app:install    # 編譯 release 版，裝到 /Applications/Atype.app 並
 
 第二大腦每一筆寫兩處：`atype.jsonl`（時間、貼上的文字、原始辨識、是否經過 LLM）與 `年/年-月-日.md` 的每日紀錄。App 的歷史紀錄只保留最近 300 筆，第二大腦不會刪。
 
-## `atype.json`
+## 個人化頁面與 `atype.json`
 
-第一次啟動時自動建立。用文字編輯器改完存檔，下一次錄音就生效。
+側邊欄「個人化」可以看今天、本週、累計說了多少字，選第二大腦資料夾並在 Finder 打開，調整 LLM 時間預算與開關，還有一個「試試看」框直接看中文排版效果。這些設定存在 `atype.json`，也可以用文字編輯器改，存檔後下一次錄音就生效。
 
 | 欄位 | 預設 | 意思 |
 |---|---|---|
@@ -67,6 +67,7 @@ bun run app:install    # 編譯 release 版，裝到 /Applications/Atype.app 並
 |---|---|
 | `zh_post.rs` | 確定性中文層。只有偵測到真正的簡體字才跑 OpenCC `s2twp`（软件→軟體、网络→網路），台北、著名、後面這類共用字不會誤判；中文句子的標點轉全形，保留 3.5、3:30、example.com、1,000；中英數之間加空格 |
 | `config.rs` | 讀寫 `atype.json`，決定第二大腦資料夾 |
+| `commands.rs` | 個人化頁面用的指令：讀寫設定、使用量統計、套用中文排版、打開第二大腦資料夾 |
 | `brain.rs` | 第二大腦：收到歷史紀錄新增或更新的事件就寫入 |
 | `defaults.rs` | 一次性把 Atype 的偏好套到既有設定（後處理開、繁體、歷史 300 筆） |
 | `mod.rs` | 中文模型清單與推薦順序、主熱鍵是否走 LLM |
@@ -79,7 +80,7 @@ bun run app:install    # 編譯 release 版，裝到 /Applications/Atype.app 並
 
 ```bash
 bun run build                                  # 前端型別檢查與建置
-cd src-tauri && cargo test                     # 290 個測試，含 atype 模組
+cd src-tauri && cargo test                     # 298 個測試，含 atype 模組
 cargo run -- --polish "我们明天下午3:30开会,地点在Costco旁边."
 # → 我們明天下午 3:30 開會，地點在 Costco 旁邊。
 ```

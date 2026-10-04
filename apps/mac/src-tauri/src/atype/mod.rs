@@ -6,9 +6,11 @@
 //! - `actions::process_transcription_output` → [`zh_post::polish`] and the
 //!   LLM time budget from [`config::AtypeConfig::llm_timeout_ms`]
 //! - `lib.rs` setup → [`init`] (second-brain listener)
+//! - `lib.rs` `collect_commands!` → [`commands`] (the 個人化 settings page)
 //! - `--polish TEXT` on the CLI → [`zh_post::polish`]
 
 pub mod brain;
+pub mod commands;
 pub mod config;
 pub mod defaults;
 pub mod zh_post;

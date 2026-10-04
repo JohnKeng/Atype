@@ -37,7 +37,7 @@ flowchart LR
 1. **日常試用一週**，同時錄下方的 50 句測試句，決定 STT（SenseVoice 對 Qwen3-ASR）與 LLM（Gemini 對 Haiku）。
 2. **裝成正式 App**：`cd apps/mac && bun run app:install`，之後不用再開終端機。
 3. **拼音別名詞典**：人名、產品名的同音錯字修正（無聲調拼音、音節級比對，只替換自己加的詞），詞條同時餵進 prompt 的 `<known_terms>`。
-4. **Atype 設定頁**：在 App 裡改第二大腦資料夾、LLM 時間預算、詞典，不用手改 `atype.json`。
+4. **詞典編輯介面**：放進「個人化」頁（頁面本身、使用量統計、第二大腦資料夾、LLM 時間預算已於 2026-10-04 完成）。
 5. **Apple `SpeechTranscriber` 引擎**（macOS 26+，zh_TW、零下載、輸出就是繁體）。
 6. **iPhone App**。
 7. **第二大腦的用法**：全文搜尋、每日摘要、匯出到筆記工具。

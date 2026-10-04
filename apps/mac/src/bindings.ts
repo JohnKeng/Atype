@@ -928,6 +928,47 @@ async isLaptop() : Promise<Result<boolean, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async getAtypeConfig() : Promise<Result<AtypeConfigView, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_atype_config") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setAtypeConfig(config: AtypeConfig) : Promise<Result<AtypeConfigView, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_atype_config", { config }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getAtypeStats() : Promise<Result<AtypeStats, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_atype_stats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open the second-brain folder in Finder, creating it first if needed.
+ */
+async openBrainDir() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_brain_dir") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Run the deterministic Chinese layer on `text` (the "試試看" box).
+ */
+async atypePolish(text: string) : Promise<string> {
+    return await TAURI_INVOKE("atype_polish", { text });
 }
 }
 
@@ -1018,6 +1059,48 @@ vad_backend?: VadBackend;
  * `overlay_position` (position `none` → style `None`).
  */
 overlay_style?: OverlayStyle }
+export type AtypeConfig = { 
+/**
+ * Run the deterministic Chinese layer (OpenCC s2twp gate, full-width
+ * punctuation, pangu spacing) on every result.
+ */
+zh_post_enabled: boolean; 
+/**
+ * Time budget for the LLM. When it is exceeded the deterministic result
+ * of the raw transcription is pasted instead of waiting.
+ */
+llm_timeout_ms: number; 
+/**
+ * The main hotkey (not only the separate post-process hotkey) runs the
+ * LLM whenever post-processing is enabled in Advanced settings.
+ */
+llm_on_main_hotkey: boolean; 
+/**
+ * Append every transcription to the second-brain folder.
+ */
+brain_enabled: boolean; 
+/**
+ * Second-brain folder. `None` = iCloud Drive/Atype/brain on macOS when
+ * iCloud Drive exists, otherwise `<app data>/brain`. `~/` is expanded.
+ */
+brain_dir: string | null; 
+/**
+ * Which one-time Atype defaults have been applied to Handy's settings
+ * (see `atype::defaults`). Managed by the app; leave it alone.
+ */
+defaults_version: number }
+/**
+ * [`AtypeConfig`] plus the folder the second brain actually writes to.
+ */
+export type AtypeConfigView = { zh_post_enabled: boolean; llm_timeout_ms: number; llm_on_main_hotkey: boolean; brain_enabled: boolean; brain_dir: string | null; defaults_version: number; 
+/**
+ * `brain_dir` after defaults and `~/` expansion (empty if unknown).
+ */
+resolved_brain_dir: string }
+/**
+ * Dictation totals from the second-brain `atype.jsonl`.
+ */
+export type AtypeStats = { today_chars: number; today_entries: number; week_chars: number; week_entries: number; total_chars: number; total_entries: number }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { transcribe: string[]; ort: string[]; gpu_devices: GpuDeviceOption[] }

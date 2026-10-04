@@ -1,5 +1,8 @@
 import React from "react";
 
+// Product name, not UI copy: never translated.
+const BRAND_NAME = "Atype";
+
 // Atype wordmark: voice-waveform mark + "Atype". The file and component keep
 // their upstream (Handy) names so `git subtree pull` stays conflict-free for
 // every component that imports it.
@@ -44,8 +47,7 @@ const HandyTextLogo = ({
           letterSpacing: "-2px",
         }}
       >
-        {/* eslint-disable-next-line i18next/no-literal-string */}
-        Atype
+        {BRAND_NAME}
       </text>
     </svg>
   );

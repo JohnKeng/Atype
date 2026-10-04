@@ -4,7 +4,7 @@
 
 這是自用的 Typeless。Mac 已經能用，iPhone 是下一步。
 
-![Atype 首次啟動畫面](docs/images/atype-mac-onboarding.png)
+![Atype 的個人化頁面](docs/images/atype-mac-personal.png)
 
 ## 在 Mac 上安裝
 
