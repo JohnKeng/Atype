@@ -38,6 +38,9 @@ final class AppModel {
     var baseURL: String { didSet { defaults.set(baseURL, forKey: "baseURL") } }
     var commandTimeout: Double { didSet { defaults.set(commandTimeout, forKey: "commandTimeout") } }
     var apiKey: String { didSet { Keychain.set(apiKey, for: "llm") } }
+    var recognizer: AppleSpeechEngine.Model {
+        didSet { defaults.set(recognizer.rawValue, forKey: "recognizer"); engine.model = recognizer }
+    }
 
     private let defaults = UserDefaults.standard
     private let engine = AppleSpeechEngine()
@@ -50,6 +53,7 @@ final class AppModel {
         commandTimeout = defaults.object(forKey: "commandTimeout") as? Double ?? 12
         apiKey = Keychain.get("llm") ?? ""
         standbyMinutes = defaults.object(forKey: "standbyMinutes") as? Int ?? 3
+        recognizer = AppleSpeechEngine.Model(rawValue: defaults.string(forKey: "recognizer") ?? "") ?? .dictation
         reloadConfig()
         engine.onPartial = { [weak self] final, volatile in
             guard let self else { return }
@@ -59,6 +63,7 @@ final class AppModel {
             Bridge.post(.changed)
             DebugLog.log("app", "partial final=\(final.count) volatile=\(volatile.count) bg=\(UIApplication.shared.applicationState != .active)")
         }
+        engine.model = recognizer
         listenToKeyboard()
         HostTracker.shared.start()
     }

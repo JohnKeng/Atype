@@ -220,6 +220,11 @@
         "chars": "字數",
         "entries": "筆數"
       },
+      "profile": {
+        "title": "我的資料",
+        "description": "AI 寫信、回訊息需要署名、職稱、公司時會直接用這裡的資料，不會再標【待補】。和 iPhone 共用",
+        "placeholder": "署名：John\n職稱：技術長\n公司：樂衍"
+      },
       "dictionary": {
         "title": "詞典",
         "description": "修正常聽錯的人名、產品名和用語。在本機處理，不開 AI 也有效；開了 AI 時也會把這些詞告訴它",

@@ -370,6 +370,7 @@ pub(crate) async fn process_transcription_output(
     let mut final_text = crate::atype::dictionary::apply(transcription, &atype_cfg.dictionary);
     let llm_timeout_ms = crate::atype::prompt_for_call(&mut settings, &atype_cfg, command);
     crate::atype::add_known_terms(&mut settings, &atype_cfg.dictionary);
+    crate::atype::add_profile(&mut settings, &atype_cfg.profile);
     if post_process {
         let budget = std::time::Duration::from_millis(llm_timeout_ms.max(1));
         let outcome =

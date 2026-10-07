@@ -88,6 +88,24 @@ final class AppleSpeechEngine {
 
     static let locale = Locale(identifier: "zh-TW")
 
+    /// Which Apple recognizer runs a take.
+    enum Model: String, CaseIterable, Identifiable {
+        /// SpeechTranscriber: the newer long-form model.
+        case speech
+        /// DictationTranscriber: the model behind the system keyboard's
+        /// dictation, tuned for short dictated sentences, with punctuation.
+        case dictation
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .speech: "Apple 長篇辨識（SpeechTranscriber）"
+            case .dictation: "Apple 聽寫辨識（DictationTranscriber）"
+            }
+        }
+    }
+
+    var model: Model = .dictation
+
     /// Called with (finalized, volatile) text while recording.
     var onPartial: ((String, String) -> Void)?
 
@@ -106,7 +124,7 @@ final class AppleSpeechEngine {
 
     /// Reserve the locale for this app (required before asking about its
     /// assets), then download the model if it is not on the device yet.
-    static func ensureAssets(for transcriber: SpeechTranscriber, locale: Locale) async throws {
+    static func ensureAssets(for transcriber: any SpeechModule, locale: Locale) async throws {
         let reserved = await AssetInventory.reservedLocales
         if !reserved.contains(where: { $0.identifier(.bcp47) == locale.identifier(.bcp47) }) {
             _ = try await AssetInventory.reserve(locale: locale)
@@ -142,12 +160,25 @@ final class AppleSpeechEngine {
     func start(contextualStrings: [String]) async throws {
         finalized = ""
         volatile = ""
-        guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: Self.locale) else {
-            throw EngineError.localeUnsupported
+        let module: any SpeechModule
+        let results: AsyncThrowingStream<(String, Bool), Error>
+        switch model {
+        case .speech:
+            guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: Self.locale) else { throw EngineError.localeUnsupported }
+            // No .fastResults: it trades accuracy for latency, and the
+            // keyboard cannot show live text while we run in the background.
+            let t = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: [])
+            try await Self.ensureAssets(for: t, locale: locale)
+            module = t
+            results = Self.stream(t.results) { (String($0.text.characters), $0.isFinal) }
+        case .dictation:
+            guard let locale = await DictationTranscriber.supportedLocale(equivalentTo: Self.locale) else { throw EngineError.localeUnsupported }
+            let t = DictationTranscriber(locale: locale, contentHints: [], transcriptionOptions: [.punctuation], reportingOptions: [.volatileResults], attributeOptions: [])
+            try await Self.ensureAssets(for: t, locale: locale)
+            module = t
+            results = Self.stream(t.results) { (String($0.text.characters), $0.isFinal) }
         }
-        let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [.volatileResults, .fastResults], attributeOptions: [])
-        try await Self.ensureAssets(for: transcriber, locale: locale)
-        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        let analyzer = SpeechAnalyzer(modules: [module])
         self.analyzer = analyzer
         if !contextualStrings.isEmpty {
             let context = AnalysisContext()
@@ -156,7 +187,7 @@ final class AppleSpeechEngine {
         }
 
         let micFormat = audioEngine.inputNode.outputFormat(forBus: 0)
-        guard let target = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber], considering: micFormat) else {
+        guard let target = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [module], considering: micFormat) else {
             throw EngineError.noAudioFormat
         }
         try await analyzer.prepareToAnalyze(in: target)
@@ -165,10 +196,9 @@ final class AppleSpeechEngine {
 
         resultsTask = Task { [weak self] in
             do {
-                for try await result in transcriber.results {
-                    let text = String(result.text.characters)
+                for try await (text, isFinal) in results {
                     guard let self else { return }
-                    if result.isFinal {
+                    if isFinal {
                         self.finalized += text
                         self.volatile = ""
                     } else {
@@ -181,6 +211,19 @@ final class AppleSpeechEngine {
 
         sink.attach(continuation, converter: micFormat == target ? nil : AVAudioConverter(from: micFormat, to: target), target: target)
         try openMic()
+    }
+
+    /// Both transcribers' results as (text, isFinal).
+    private static func stream<S: AsyncSequence & Sendable>(_ seq: S, _ map: @escaping @Sendable (S.Element) -> (String, Bool)) -> AsyncThrowingStream<(String, Bool), Error> where S.Element: Sendable {
+        AsyncThrowingStream { c in
+            let task = Task {
+                do {
+                    for try await r in seq { c.yield(map(r)) }
+                    c.finish()
+                } catch { c.finish(throwing: error) }
+            }
+            c.onTermination = { _ in task.cancel() }
+        }
     }
 
     /// End the take and return its text. The microphone stays open.

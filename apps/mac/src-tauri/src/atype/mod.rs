@@ -128,6 +128,22 @@ pub fn add_known_terms(
     let Some(block) = dictionary::known_terms_prompt(dictionary) else {
         return;
     };
+    append_to_selected_prompt(settings, &block);
+}
+
+/// Append the user's profile as <about_me> (signature, title, company…).
+pub fn add_profile(settings: &mut crate::settings::AppSettings, profile: &str) {
+    let p = profile.trim();
+    if p.is_empty() {
+        return;
+    }
+    let block = format!(
+        "\n<about_me>\n{p}\n</about_me>\n以上是使用者本人的資料。需要署名、自稱、職稱、公司或聯絡方式時，直接使用這些資料，不要再標【待補】。\n"
+    );
+    append_to_selected_prompt(settings, &block);
+}
+
+fn append_to_selected_prompt(settings: &mut crate::settings::AppSettings, block: &str) {
     let Some(id) = settings.post_process_selected_prompt_id.clone() else {
         return;
     };
@@ -136,7 +152,7 @@ pub fn add_known_terms(
         .iter_mut()
         .find(|p| p.id == id)
     {
-        prompt.prompt.push_str(&block);
+        prompt.prompt.push_str(block);
     }
 }
 

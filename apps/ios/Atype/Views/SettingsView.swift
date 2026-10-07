@@ -23,6 +23,28 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
+                    Picker("辨識引擎", selection: $model.recognizer) {
+                        ForEach(AppleSpeechEngine.Model.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                } header: { Text("語音辨識") } footer: {
+                    Text("兩個都在 iPhone 本機辨識，聲音不上傳。「聽寫辨識」是系統鍵盤聽寫用的模型，短句通常比較準；可以兩個都試試。")
+                }
+
+                Section {
+                    TextField("例如：\n署名：John\n職稱：技術長\n公司：樂衍", text: Binding(
+                        get: { model.config.profile },
+                        set: { model.config.profile = $0 }
+                    ), axis: .vertical)
+                    .lineLimit(3...8)
+                    .onSubmit { model.saveConfig() }
+                    Button("儲存我的資料") { model.saveConfig() }
+                } header: { Text("我的資料") } footer: {
+                    Text("AI 寫信、回訊息需要署名、職稱、公司時會直接用這裡的資料，不會再標【待補】。和 Mac 共用。")
+                }
+
+                Section {
                     NavigationLink { PromptLibraryView() } label: {
                         LabeledContent("提示詞", value: model.commandPromptName)
                     }

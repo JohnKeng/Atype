@@ -28,6 +28,7 @@ pub struct AtypeConfigView {
     pub brain_dir: Option<String>,
     pub defaults_version: u32,
     pub dictionary: Vec<super::dictionary::DictEntry>,
+    pub profile: String,
     pub command_timeout_ms: u64,
     /// `brain_dir` after defaults and `~/` expansion (empty if unknown).
     pub resolved_brain_dir: String,
@@ -56,6 +57,7 @@ fn view(app: &AppHandle, cfg: AtypeConfig) -> AtypeConfigView {
         brain_dir: cfg.brain_dir,
         defaults_version: cfg.defaults_version,
         dictionary: cfg.dictionary,
+        profile: cfg.profile,
         command_timeout_ms: cfg.command_timeout_ms,
         resolved_brain_dir: resolved,
     }
@@ -92,7 +94,7 @@ pub fn get_atype_config(app: AppHandle) -> Result<AtypeConfigView, String> {
 pub fn set_atype_config(app: AppHandle, config: AtypeConfig) -> Result<AtypeConfigView, String> {
     let stored = config::load(&app);
     let cfg = sanitize(config, &stored);
-    let dictionary_changed = cfg.dictionary != stored.dictionary;
+    let dictionary_changed = cfg.dictionary != stored.dictionary || cfg.profile != stored.profile;
     let brain_moved = cfg.brain_dir != stored.brain_dir;
     config::save(&app, &cfg);
     if brain_moved {

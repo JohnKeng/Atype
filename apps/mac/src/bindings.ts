@@ -1101,6 +1101,11 @@ dictionary: DictEntry[];
  */
 command_timeout_ms: number; 
 /**
+ * About the user (signature, title, company…), appended to every prompt
+ * as <about_me>. Shared with the iPhone.
+ */
+profile: string; 
+/**
  * `updated_at` of the shared file (atype-shared.json) last applied or
  * written. Managed by the app.
  */
@@ -1108,7 +1113,7 @@ shared_synced_at: string | null }
 /**
  * [`AtypeConfig`] plus the folder the second brain actually writes to.
  */
-export type AtypeConfigView = { zh_post_enabled: boolean; llm_timeout_ms: number; llm_on_main_hotkey: boolean; brain_enabled: boolean; brain_dir: string | null; defaults_version: number; dictionary: DictEntry[]; command_timeout_ms: number; 
+export type AtypeConfigView = { zh_post_enabled: boolean; llm_timeout_ms: number; llm_on_main_hotkey: boolean; brain_enabled: boolean; brain_dir: string | null; defaults_version: number; dictionary: DictEntry[]; profile: string; command_timeout_ms: number; 
 /**
  * `brain_dir` after defaults and `~/` expansion (empty if unknown).
  */

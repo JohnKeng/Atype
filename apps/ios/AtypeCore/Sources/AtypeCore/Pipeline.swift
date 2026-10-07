@@ -44,6 +44,7 @@ public struct Pipeline: Sendable {
         }
         guard var p = config.prompt(id: id) else { return nil }
         if let block = PersonalDictionary.knownTermsPrompt(config.dictionary) { p.prompt += block }
+        if let block = Profile.prompt(config.profile) { p.prompt += block }
         return p
     }
 

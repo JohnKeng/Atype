@@ -125,6 +125,15 @@ import Testing
         #expect(Pipeline(config: cfg, llm: nil).prompt(for: .dictation(polish: false)) == nil)
     }
 
+    @Test func profileIsAppendedToPrompts() {
+        var cfg = SharedConfig()
+        cfg.profile = "署名：John"
+        let p = Pipeline(config: cfg, llm: nil).prompt(for: .command)
+        #expect(p?.prompt.contains("<about_me>\n署名：John") == true)
+        cfg.profile = "  "
+        #expect(Pipeline(config: cfg, llm: nil).prompt(for: .command)?.prompt.contains("about_me") == false)
+    }
+
     @Test func modelFilter() {
         #expect(LLMClient.isChatModel("models/gemini-3.1-flash-lite"))
         #expect(!LLMClient.isChatModel("models/gemini-3.8-live"))

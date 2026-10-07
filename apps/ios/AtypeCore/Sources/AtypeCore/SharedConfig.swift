@@ -16,6 +16,15 @@ public struct Prompt: Codable, Hashable, Identifiable, Sendable {
     }
 }
 
+public enum Profile {
+    /// Block appended to prompts, or nil when the profile is empty.
+    public static func prompt(_ profile: String) -> String? {
+        let p = profile.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !p.isEmpty else { return nil }
+        return "\n<about_me>\n\(p)\n</about_me>\n以上是使用者本人的資料。需要署名、自稱、職稱、公司或聯絡方式時，直接使用這些資料，不要再標【待補】。\n"
+    }
+}
+
 public enum Presets {
     public static let cleanupID = "default_improve_transcriptions"
     public static let smartID = "atype_smart"
@@ -39,11 +48,14 @@ public struct SharedConfig: Codable, Equatable, Sendable {
     /// Prompt used by the AI command (Mac: the one selected in 後處理).
     public var commandPromptID: String = Presets.smartID
     public var dictionary: [DictEntry] = []
+    /// About the user (name to sign with, title, company…), given to every
+    /// prompt so signatures and greetings are filled in, not marked 【待補】.
+    public var profile: String = ""
 
     public init() {}
 
     enum CodingKeys: String, CodingKey {
-        case version, prompts, dictionary
+        case version, prompts, dictionary, profile
         case updatedAt = "updated_at"
         case commandPromptID = "command_prompt_id"
     }
@@ -55,6 +67,7 @@ public struct SharedConfig: Codable, Equatable, Sendable {
         prompts = try c.decodeIfPresent([Prompt].self, forKey: .prompts) ?? Presets.all
         commandPromptID = try c.decodeIfPresent(String.self, forKey: .commandPromptID) ?? Presets.smartID
         dictionary = try c.decodeIfPresent([DictEntry].self, forKey: .dictionary) ?? []
+        profile = try c.decodeIfPresent(String.self, forKey: .profile) ?? ""
     }
 
     /// Built-in prompts the file does not have yet (by id); edited ones stay.

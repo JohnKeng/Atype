@@ -220,6 +220,11 @@
         "chars": "characters",
         "entries": "entries"
       },
+      "profile": {
+        "title": "About me",
+        "description": "Used by the AI for signatures, titles and company names instead of leaving 【待補】 placeholders. Shared with the iPhone",
+        "placeholder": "Signature: John\nTitle: CTO\nCompany: Leyan"
+      },
       "dictionary": {
         "title": "Dictionary",
         "description": "Fix names, products and terms that keep being misheard. Runs on this Mac, works with AI off, and the terms are also given to the AI when it is on",

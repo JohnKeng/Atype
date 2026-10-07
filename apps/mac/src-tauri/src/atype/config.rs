@@ -41,6 +41,9 @@ pub struct AtypeConfig {
     /// Time budget for the command hotkey; writing a whole email takes longer
     /// than cleaning up a sentence.
     pub command_timeout_ms: u64,
+    /// About the user (signature, title, company…), appended to every prompt
+    /// as <about_me>. Shared with the iPhone.
+    pub profile: String,
     /// `updated_at` of the shared file (atype-shared.json) last applied or
     /// written. Managed by the app.
     pub shared_synced_at: Option<String>,
@@ -57,6 +60,7 @@ impl Default for AtypeConfig {
             defaults_version: 0,
             dictionary: Vec::new(),
             command_timeout_ms: 12_000,
+            profile: String::new(),
             shared_synced_at: None,
         }
     }

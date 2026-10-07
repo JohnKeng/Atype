@@ -37,6 +37,7 @@ pub struct SharedConfig {
     pub prompts: Vec<SharedPrompt>,
     pub command_prompt_id: String,
     pub dictionary: Vec<DictEntry>,
+    pub profile: String,
 }
 
 impl Default for SharedConfig {
@@ -47,6 +48,7 @@ impl Default for SharedConfig {
             prompts: Vec::new(),
             command_prompt_id: super::prompts::SMART_ID.to_string(),
             dictionary: Vec::new(),
+            profile: String::new(),
         }
     }
 }
@@ -77,6 +79,7 @@ pub fn from_local(settings: &AppSettings, cfg: &AtypeConfig) -> SharedConfig {
             .clone()
             .unwrap_or_else(|| super::prompts::SMART_ID.to_string()),
         dictionary: cfg.dictionary.clone(),
+        profile: cfg.profile.clone(),
         ..SharedConfig::default()
     }
 }
@@ -107,6 +110,7 @@ pub fn apply(shared: &SharedConfig, settings: &mut AppSettings, cfg: &mut AtypeC
     };
     settings.post_process_selected_prompt_id = Some(id);
     cfg.dictionary = dictionary::sanitize(shared.dictionary.clone());
+    cfg.profile = shared.profile.clone();
 }
 
 fn read(path: &PathBuf) -> Option<SharedConfig> {
@@ -135,8 +139,9 @@ pub fn push(app: &AppHandle) {
     let Ok(text) = serde_json::to_string_pretty(&shared) else {
         return;
     };
-    let tmp = path.with_extension("json.tmp");
-    if let Err(e) = std::fs::write(&tmp, text + "\n").and_then(|_| std::fs::rename(&tmp, &path)) {
+    // Write in place (not temp file + rename): iCloud Drive reliably picks up
+    // an in-place change, while a renamed-over file did not reach the iPhone.
+    if let Err(e) = std::fs::write(&path, text + "\n") {
         warn!("Atype shared: could not write {}: {}", path.display(), e);
         return;
     }

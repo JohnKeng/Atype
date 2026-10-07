@@ -33,6 +33,7 @@ const toConfig = (view: AtypeConfigView): AtypeConfig => ({
   brain_dir: view.brain_dir,
   defaults_version: view.defaults_version,
   dictionary: view.dictionary,
+  profile: view.profile,
   command_timeout_ms: view.command_timeout_ms,
   shared_synced_at: null,
 });
@@ -47,6 +48,7 @@ export const AtypeSettings: React.FC = () => {
   const [sample, setSample] = useState(SAMPLE_TEXT);
   const [polished, setPolished] = useState<string | null>(null);
   const [dictOpen, setDictOpen] = useState(false);
+  const [profileDraft, setProfileDraft] = useState<string | null>(null);
   const configRef = useRef<AtypeConfigView | null>(null);
   const saveSeq = useRef(0);
 
@@ -215,6 +217,30 @@ export const AtypeSettings: React.FC = () => {
           ))}
         </div>
       </SettingsGroup>
+
+      {config && (
+        <SettingsGroup
+          title={t("settings.atype.profile.title")}
+          description={t("settings.atype.profile.description")}
+        >
+          <div className="px-4 py-3">
+            <Textarea
+              className="w-full"
+              variant="compact"
+              rows={4}
+              value={profileDraft ?? config.profile}
+              placeholder={t("settings.atype.profile.placeholder")}
+              onChange={(e) => setProfileDraft(e.target.value)}
+              onBlur={() => {
+                if (profileDraft !== null && profileDraft !== config.profile) {
+                  update({ profile: profileDraft });
+                }
+                setProfileDraft(null);
+              }}
+            />
+          </div>
+        </SettingsGroup>
+      )}
 
       {config && (
         <SettingsGroup title={t("settings.atype.dictionary.title")}>
