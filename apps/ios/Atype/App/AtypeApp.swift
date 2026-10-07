@@ -10,8 +10,10 @@ struct AtypeApp: App {
             RootView()
                 .environment(model)
                 .tint(Theme.green)
+                .onOpenURL { model.handle(url: $0) }
                 .onChange(of: scenePhase) { _, phase in
                     // Pick up prompt/dictionary edits made on the Mac.
+                    DebugLog.log("app", "scene \(phase)")
                     if phase == .active, !model.isBusy { model.reloadConfig() }
                 }
         }

@@ -1,11 +1,77 @@
 // Streaming on-device recognition with Apple's SpeechAnalyzer + SpeechTranscriber
 // (iOS 26, zh-TW, no download beyond the system's speech assets).
-// Microphone → AVAudioEngine tap → converted to the analyzer's format →
-// AnalyzerInput stream. Finalized text accumulates; volatile text is shown
-// live. Dictionary terms are passed as contextual strings.
+//
+// The microphone (AVAudioEngine + one tap) and a take (one SpeechAnalyzer)
+// are separate: between takes the microphone can stay open on standby, so
+// the keyboard can start the next take without opening the app. Buffers
+// are only forwarded while a take is running.
 
 import AVFoundation
 import Speech
+
+/// Where the tap sends audio: the current take, or nowhere. Touched from the
+/// realtime audio thread, so it is a locked box, not actor state.
+final class AudioSink: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: AsyncStream<AnalyzerInput>.Continuation?
+    private var converter: AVAudioConverter?
+    private var target: AVAudioFormat?
+    private var _level: Double = 0
+
+    /// Smoothed input level 0…1 of the current take.
+    var level: Double {
+        lock.lock(); defer { lock.unlock() }
+        return _level
+    }
+
+    func attach(_ c: AsyncStream<AnalyzerInput>.Continuation, converter: AVAudioConverter?, target: AVAudioFormat) {
+        lock.lock(); defer { lock.unlock() }
+        continuation = c
+        self.converter = converter
+        self.target = target
+    }
+
+    func detach() {
+        lock.lock(); defer { lock.unlock() }
+        continuation?.finish()
+        continuation = nil
+    }
+
+    func push(_ buffer: AVAudioPCMBuffer) {
+        lock.lock(); defer { lock.unlock() }
+        guard let continuation, let target else { _level = 0; return }
+        if let data = buffer.floatChannelData?[0], buffer.frameLength > 0 {
+            var sum: Float = 0
+            for i in 0..<Int(buffer.frameLength) { sum += data[i] * data[i] }
+            let rms = sqrt(sum / Float(buffer.frameLength))
+            // -50 dB … -10 dB → 0 … 1, then smooth (fast attack, slow release).
+            let db = 20 * log10(max(rms, 1e-6))
+            let v = Double(min(max((db + 50) / 40, 0), 1))
+            _level = v > _level ? v : _level * 0.75 + v * 0.25
+        }
+        guard let converted = Self.convert(buffer, with: converter, to: target) else { return }
+        continuation.yield(AnalyzerInput(buffer: converted))
+    }
+
+    private static func convert(_ buffer: AVAudioPCMBuffer, with converter: AVAudioConverter?, to format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        guard let converter else { return buffer }
+        let ratio = format.sampleRate / buffer.format.sampleRate
+        let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio + 1024)
+        guard let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else { return nil }
+        var consumed = false
+        var error: NSError?
+        converter.convert(to: out, error: &error) { _, status in
+            if consumed {
+                status.pointee = .noDataNow
+                return nil
+            }
+            consumed = true
+            status.pointee = .haveData
+            return buffer
+        }
+        return error == nil ? out : nil
+    }
+}
 
 @MainActor
 final class AppleSpeechEngine {
@@ -26,37 +92,53 @@ final class AppleSpeechEngine {
     var onPartial: ((String, String) -> Void)?
 
     private let audioEngine = AVAudioEngine()
+    private let sink = AudioSink()
+    private var tapInstalled = false
     private var analyzer: SpeechAnalyzer?
-    private var transcriber: SpeechTranscriber?
-    private var inputContinuation: AsyncStream<AnalyzerInput>.Continuation?
     private var resultsTask: Task<Void, Never>?
-    private var converter: AVAudioConverter?
     private var finalized = ""
     private var volatile = ""
 
-    /// Make sure the zh-TW speech model is on the device (downloads once).
-    static func prepareAssets() async throws {
-        guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: locale) else {
-            throw EngineError.localeUnsupported
-        }
-        let t = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [.volatileResults], attributeOptions: [])
-        try await ensureAssets(for: t, locale: locale)
-    }
+    var level: Double { sink.level }
+
+    /// The microphone is open (recording or on standby).
+    var micOpen: Bool { audioEngine.isRunning }
 
     /// Reserve the locale for this app (required before asking about its
     /// assets), then download the model if it is not on the device yet.
     static func ensureAssets(for transcriber: SpeechTranscriber, locale: Locale) async throws {
         let reserved = await AssetInventory.reservedLocales
         if !reserved.contains(where: { $0.identifier(.bcp47) == locale.identifier(.bcp47) }) {
-            let ok = try await AssetInventory.reserve(locale: locale)
-            NSLog("Atype speech: reserve %@ -> %d (reserved before: %@)", locale.identifier, ok ? 1 : 0, reserved.map(\.identifier).joined(separator: ","))
+            _ = try await AssetInventory.reserve(locale: locale)
         }
-        NSLog("Atype speech: status %@, installed %@", String(describing: await AssetInventory.status(forModules: [transcriber])), await SpeechTranscriber.installedLocales.map(\.identifier).joined(separator: ","))
         if let request = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
             try await request.downloadAndInstall()
         }
     }
 
+    /// Open the microphone (no-op when already open). Buffers go nowhere
+    /// until a take starts.
+    func openMic() throws {
+        guard !audioEngine.isRunning else { return }
+        let input = audioEngine.inputNode
+        if !tapInstalled {
+            input.installTap(onBus: 0, bufferSize: 4096, format: input.outputFormat(forBus: 0), block: Self.makeTap(sink))
+            tapInstalled = true
+        }
+        audioEngine.prepare()
+        try audioEngine.start()
+    }
+
+    func closeMic() {
+        sink.detach()
+        if tapInstalled {
+            audioEngine.inputNode.removeTap(onBus: 0)
+            tapInstalled = false
+        }
+        audioEngine.stop()
+    }
+
+    /// Start a take: a fresh analyzer fed by the (opened) microphone.
     func start(contextualStrings: [String]) async throws {
         finalized = ""
         volatile = ""
@@ -64,7 +146,6 @@ final class AppleSpeechEngine {
             throw EngineError.localeUnsupported
         }
         let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [.volatileResults, .fastResults], attributeOptions: [])
-        self.transcriber = transcriber
         try await Self.ensureAssets(for: transcriber, locale: locale)
         let analyzer = SpeechAnalyzer(modules: [transcriber])
         self.analyzer = analyzer
@@ -74,62 +155,46 @@ final class AppleSpeechEngine {
             try? await analyzer.setContext(context)
         }
 
-        let input = audioEngine.inputNode
-        let micFormat = input.outputFormat(forBus: 0)
+        let micFormat = audioEngine.inputNode.outputFormat(forBus: 0)
         guard let target = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber], considering: micFormat) else {
             throw EngineError.noAudioFormat
         }
         try await analyzer.prepareToAnalyze(in: target)
-        converter = micFormat == target ? nil : AVAudioConverter(from: micFormat, to: target)
-
         let (stream, continuation) = AsyncStream<AnalyzerInput>.makeStream()
-        inputContinuation = continuation
         try await analyzer.start(inputSequence: stream)
 
         resultsTask = Task { [weak self] in
             do {
                 for try await result in transcriber.results {
                     let text = String(result.text.characters)
-                    await MainActor.run {
-                        guard let self else { return }
-                        if result.isFinal {
-                            self.finalized += text
-                            self.volatile = ""
-                        } else {
-                            self.volatile = text
-                        }
-                        self.onPartial?(self.finalized, self.volatile)
+                    guard let self else { return }
+                    if result.isFinal {
+                        self.finalized += text
+                        self.volatile = ""
+                    } else {
+                        self.volatile = text
                     }
+                    self.onPartial?(self.finalized, self.volatile)
                 }
             } catch {}
         }
 
-        input.installTap(onBus: 0, bufferSize: 4096, format: micFormat,
-                         block: Self.makeTap(converter: converter, target: target, continuation: continuation))
-        audioEngine.prepare()
-        try audioEngine.start()
+        sink.attach(continuation, converter: micFormat == target ? nil : AVAudioConverter(from: micFormat, to: target), target: target)
+        try openMic()
     }
 
-    /// Stop the microphone, let the analyzer finish and return the full text.
+    /// End the take and return its text. The microphone stays open.
     func stop() async -> String {
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
-        inputContinuation?.finish()
-        inputContinuation = nil
+        sink.detach()
         try? await analyzer?.finalizeAndFinishThroughEndOfInput()
         await resultsTask?.value
         resultsTask = nil
         analyzer = nil
-        transcriber = nil
-        let text = (finalized + volatile).trimmingCharacters(in: .whitespacesAndNewlines)
-        return text
+        return (finalized + volatile).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func cancel() async {
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
-        inputContinuation?.finish()
-        inputContinuation = nil
+        sink.detach()
         await analyzer?.cancelAndFinishNow()
         resultsTask?.cancel()
         resultsTask = nil
@@ -138,34 +203,7 @@ final class AppleSpeechEngine {
 
     /// The tap runs on a realtime audio thread, so it must not inherit the
     /// main-actor isolation of this class (Swift 6 traps when it does).
-    nonisolated private static func makeTap(
-        converter: AVAudioConverter?,
-        target: AVAudioFormat,
-        continuation: AsyncStream<AnalyzerInput>.Continuation
-    ) -> AVAudioNodeTapBlock {
-        nonisolated(unsafe) let converter = converter
-        return { @Sendable buffer, _ in
-            guard let converted = convert(buffer, with: converter, to: target) else { return }
-            continuation.yield(AnalyzerInput(buffer: converted))
-        }
-    }
-
-    nonisolated private static func convert(_ buffer: AVAudioPCMBuffer, with converter: AVAudioConverter?, to format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        guard let converter else { return buffer }
-        let ratio = format.sampleRate / buffer.format.sampleRate
-        let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio + 1024)
-        guard let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else { return nil }
-        var consumed = false
-        var error: NSError?
-        converter.convert(to: out, error: &error) { _, status in
-            if consumed {
-                status.pointee = .noDataNow
-                return nil
-            }
-            consumed = true
-            status.pointee = .haveData
-            return buffer
-        }
-        return error == nil ? out : nil
+    nonisolated private static func makeTap(_ sink: AudioSink) -> AVAudioNodeTapBlock {
+        { @Sendable buffer, _ in sink.push(buffer) }
     }
 }

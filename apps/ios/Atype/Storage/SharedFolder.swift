@@ -44,4 +44,23 @@ enum SharedFolder {
     }
 
     static func reset() { UserDefaults.standard.removeObject(forKey: bookmarkKey) }
+
+    /// True when `file` is on this device (or does not exist anywhere). When
+    /// iCloud only has a placeholder, start the download and return false.
+    static func ensureDownloaded(_ file: URL) -> Bool {
+        let fm = FileManager.default
+        let placeholder = file.deletingLastPathComponent()
+            .appendingPathComponent("." + file.lastPathComponent + ".icloud")
+        if let values = try? file.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]),
+           let status = values.ubiquitousItemDownloadingStatus {
+            if status == .current { return true }
+            try? fm.startDownloadingUbiquitousItem(at: file)
+            return false
+        }
+        if fm.fileExists(atPath: placeholder.path) {
+            try? fm.startDownloadingUbiquitousItem(at: file)
+            return false
+        }
+        return true
+    }
 }

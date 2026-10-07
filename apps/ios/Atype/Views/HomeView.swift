@@ -9,7 +9,28 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
+                    HStack(alignment: .center) {
+                        Text("Atype").font(.system(size: 34, weight: .bold))
+                        Spacer()
+                        // Same cream as the background, so no frame or cut-out.
+                        Image("Logo").resizable().frame(width: 56, height: 56).accessibilityHidden(true)
+                    }
+                    if model.fromKeyboard && (model.phase == .recording || model.phase == .preparing) { backHint }
                     modePicker
+                    if command && !model.isBusy {
+                        NavigationLink { PromptLibraryView() } label: {
+                            HStack {
+                                Image(systemName: "sparkles").foregroundStyle(Theme.ai[2])
+                                Text("提示詞").foregroundStyle(.secondary)
+                                Text(model.commandPromptName).foregroundStyle(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 16).padding(.vertical, 12)
+                            .background(Color(.secondarySystemBackground).opacity(0.7), in: RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
+                    }
                     micButton
                     statusLine
                     if model.phase == .recording || model.phase == .processing { liveCard }
@@ -21,8 +42,23 @@ struct HomeView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Atype")
+            .background(Color("Cream").ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
         }
+    }
+
+    /// Opened from the keyboard: send the user back to their app to talk.
+    private var backHint: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "arrow.up.backward.circle.fill").font(.title).foregroundStyle(Theme.green)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("點左上角「◀」回到原本的 App").font(.headline)
+                Text("Atype 會在背景繼續聽。說完在鍵盤上點停止，字就會插進去。").font(.subheadline).foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Theme.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
     }
 
     private var modePicker: some View {

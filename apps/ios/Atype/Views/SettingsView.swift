@@ -63,7 +63,22 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Toggle("結果自動複製", isOn: $model.autoCopy)
+                    Picker("待命時間", selection: $model.standbyMinutes) {
+                        Text("不待命").tag(0)
+                        Text("1 分鐘").tag(1)
+                        Text("3 分鐘").tag(3)
+                        Text("10 分鐘").tag(10)
+                        Text("30 分鐘").tag(30)
+                    }
+                    if model.standbyActive {
+                        Button("現在關閉麥克風", role: .destructive) { model.shutdownMic() }
+                    }
+                } header: { Text("鍵盤") } footer: {
+                    Text("用完後麥克風保持開啟的時間。待命中在鍵盤上點麥克風不必跳回 Atype；時間到就真的關掉麥克風。到「設定 → 一般 → 鍵盤 → 鍵盤」加入 Atype，並打開「允許完全取用」。")
+                }
+
+                Section {
+                    Toggle("在 App 裡的結果自動複製", isOn: $model.autoCopy)
                 }
             }
             .navigationTitle("設定")

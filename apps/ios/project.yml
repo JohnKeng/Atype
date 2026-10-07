@@ -20,8 +20,10 @@ targets:
     platform: iOS
     sources:
       - path: Atype
+      - path: Shared
     dependencies:
       - package: AtypeCore
+      - target: AtypeKeyboard
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.atype.ios
@@ -29,3 +31,16 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Atype/Resources/Atype.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
+  AtypeKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: AtypeKeyboard
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.atype.ios.keyboard
+        INFOPLIST_FILE: AtypeKeyboard/Info.plist
+        CODE_SIGN_ENTITLEMENTS: AtypeKeyboard/AtypeKeyboard.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        APPLICATION_EXTENSION_API_ONLY: YES
