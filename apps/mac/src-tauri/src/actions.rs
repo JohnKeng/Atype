@@ -485,7 +485,7 @@ impl ShortcutAction for TranscribeAction {
         let overlay_started = Instant::now();
         // Atype: tell the overlay whether this is the command (LLM) hotkey so
         // it can mark the session before the card shows.
-        let _ = app.emit("atype-command-mode", self.post_process);
+        crate::atype::begin_session(app, self.post_process);
         match settings.overlay_style {
             OverlayStyle::Live if model_supports_streaming => utils::show_streaming_overlay(app),
             OverlayStyle::Live | OverlayStyle::Minimal => show_recording_overlay(app),
@@ -634,9 +634,11 @@ impl ShortcutAction for TranscribeAction {
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
                                                  // Atype: the main hotkey also polishes with the LLM when post-processing
                                                  // is on (atype.json `llm_on_main_hotkey`), like Typeless.
-        let post_process = self.post_process || crate::atype::main_hotkey_polishes(app);
-        // Atype: the post-process hotkey is the command hotkey (its own prompt).
-        let command = self.post_process;
+                                                 // Atype: the post-process hotkey is the command hotkey (its own
+                                                 // prompt); a main-hotkey session becomes one when the command hotkey
+                                                 // was pressed while it recorded.
+        let command = self.post_process || crate::atype::take_command_upgrade();
+        let post_process = command || crate::atype::main_hotkey_polishes(app);
         let cancel_generation = rm.cancel_generation();
 
         tauri::async_runtime::spawn(async move {

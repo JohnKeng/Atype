@@ -13,7 +13,7 @@ use crate::settings::{
 use log::info;
 use tauri::AppHandle;
 
-pub const VERSION: u32 = 3;
+pub const VERSION: u32 = 4;
 
 /// Version 1: LLM cleanup on, Traditional output, a useful history size,
 /// no upstream "what's new" notes.
@@ -33,9 +33,9 @@ pub fn apply_v2(s: &mut AppSettings) {
     s.show_tray_icon = true;
 }
 
-/// Version 3: make the LLM cleanup actually run, and add the format presets
-/// (email, chat reply, meeting notes, ...). Select the zh-TW cleanup
-/// prompt when none is selected (Handy shipped with none, so every call was
+/// Version 3: make the LLM actually run, and add the format presets
+/// (email, chat reply, meeting notes, ...). Select 萬用口令 (the command
+/// hotkey's prompt) when none is selected (Handy shipped with none, so every call was
 /// skipped), and replace an empty or unusable Gemini model (live, TTS, ...)
 /// with the default.
 pub fn apply_v3(s: &mut AppSettings) {
@@ -63,6 +63,11 @@ pub fn apply_v3(s: &mut AppSettings) {
     }
 }
 
+/// Version 4: refresh unedited preset prompts (keep Chinese names in Chinese).
+pub fn apply_v4(s: &mut AppSettings) {
+    super::prompts::refresh_unedited(&mut s.post_process_prompts);
+}
+
 /// Setup is done once a transcription model has been chosen.
 pub fn setup_done(s: &AppSettings) -> bool {
     !s.selected_model.trim().is_empty()
@@ -86,6 +91,10 @@ pub fn apply_once(app: &AppHandle) {
     if applied == 2 {
         apply_v3(&mut settings);
         applied = 3;
+    }
+    if applied == 3 {
+        apply_v4(&mut settings);
+        applied = 4;
     }
     if applied == cfg.defaults_version {
         return;

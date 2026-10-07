@@ -1072,8 +1072,9 @@ zh_post_enabled: boolean;
  */
 llm_timeout_ms: number; 
 /**
- * The main hotkey (not only the separate post-process hotkey) runs the
- * LLM whenever post-processing is enabled in Advanced settings.
+ * The main hotkey also runs the LLM cleanup (adds 1-2 s). Off by default:
+ * the main hotkey pastes the local result at once and the command
+ * hotkey is the AI one.
  */
 llm_on_main_hotkey: boolean; 
 /**
@@ -1095,12 +1096,6 @@ defaults_version: number;
  */
 dictionary: DictEntry[]; 
 /**
- * Prompt used by the command hotkey (Handy's "transcribe with
- * post-process" binding): turn a spoken outline into an email, notes,
- * ... The main hotkey keeps the prompt selected in 後處理.
- */
-command_prompt_id: string; 
-/**
  * Time budget for the command hotkey; writing a whole email takes longer
  * than cleaning up a sentence.
  */
@@ -1108,7 +1103,7 @@ command_timeout_ms: number }
 /**
  * [`AtypeConfig`] plus the folder the second brain actually writes to.
  */
-export type AtypeConfigView = { zh_post_enabled: boolean; llm_timeout_ms: number; llm_on_main_hotkey: boolean; brain_enabled: boolean; brain_dir: string | null; defaults_version: number; dictionary: DictEntry[]; command_prompt_id: string; command_timeout_ms: number; 
+export type AtypeConfigView = { zh_post_enabled: boolean; llm_timeout_ms: number; llm_on_main_hotkey: boolean; brain_enabled: boolean; brain_dir: string | null; defaults_version: number; dictionary: DictEntry[]; command_timeout_ms: number; 
 /**
  * `brain_dir` after defaults and `~/` expansion (empty if unknown).
  */

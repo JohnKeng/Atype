@@ -365,6 +365,12 @@ impl CoordinatorState {
                     // recording), so a repeated press means nothing.
                     debug!("Ignoring press for '{}': key is held", input.binding_id);
                 }
+                Stage::Recording(id) if crate::atype::upgrade_to_command(&input.binding_id, id) => {
+                    debug!(
+                        "Atype: '{}' pressed while '{}' records; upgraded to a command session",
+                        input.binding_id, id
+                    );
+                }
                 _ => debug!(
                     "Ignoring press for '{}': another binding is recording",
                     input.binding_id

@@ -64,24 +64,58 @@ pub fn is_chat_model(model: &str) -> bool {
         .any(|marker| id.contains(marker))
 }
 
-/// For the command hotkey: switch this (per-call) copy of the settings to the
-/// command prompt, when it exists, and return the command time budget.
-/// Otherwise return the normal budget.
+/// Pick the prompt and time budget for this call, on a (per-call) copy of
+/// the settings. The command hotkey uses the prompt selected in 後處理
+/// (default 萬用口令) with the longer command budget; the main hotkey, when
+/// it runs the LLM at all, always uses the plain cleanup prompt.
 pub fn prompt_for_call(
     settings: &mut crate::settings::AppSettings,
     cfg: &config::AtypeConfig,
     command: bool,
 ) -> u64 {
-    if command
-        && settings
-            .post_process_prompts
-            .iter()
-            .any(|p| p.id == cfg.command_prompt_id)
-    {
-        settings.post_process_selected_prompt_id = Some(cfg.command_prompt_id.clone());
+    if command {
         return cfg.command_timeout_ms.max(cfg.llm_timeout_ms);
     }
+    if settings
+        .post_process_prompts
+        .iter()
+        .any(|p| p.id == prompts::CLEANUP_ID)
+    {
+        settings.post_process_selected_prompt_id = Some(prompts::CLEANUP_ID.to_string());
+    }
     cfg.llm_timeout_ms
+}
+
+static APP: std::sync::OnceLock<AppHandle> = std::sync::OnceLock::new();
+static COMMAND_UPGRADE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Start of a recording session: tell the overlay which mode it is in and
+/// forget any upgrade left from the previous session.
+pub fn begin_session(app: &AppHandle, command: bool) {
+    COMMAND_UPGRADE.store(false, std::sync::atomic::Ordering::SeqCst);
+    use tauri::Emitter;
+    let _ = app.emit("atype-command-mode", command);
+}
+
+/// The command hotkey usually extends the main one (main = right ⌘ + right
+/// ⌥, command = the same plus ←), so the main hotkey is already recording
+/// when the command press arrives. Upgrade that session to a command session
+/// instead of ignoring the press. Returns whether it upgraded.
+pub fn upgrade_to_command(pressed: &str, recording: &str) -> bool {
+    if pressed != "transcribe_with_post_process" || recording != "transcribe" {
+        return false;
+    }
+    COMMAND_UPGRADE.store(true, std::sync::atomic::Ordering::SeqCst);
+    if let Some(app) = APP.get() {
+        use tauri::Emitter;
+        let _ = app.emit("atype-command-mode", true);
+    }
+    true
+}
+
+/// Whether the session that is ending was upgraded to a command session.
+pub fn take_command_upgrade() -> bool {
+    COMMAND_UPGRADE.swap(false, std::sync::atomic::Ordering::SeqCst)
 }
 
 /// Append the dictionary's `<known_terms>` block to the selected prompt in
@@ -108,6 +142,7 @@ pub fn add_known_terms(
 /// Everything Atype wires up at runtime. Called once after Handy's managers
 /// are registered.
 pub fn init(app: &AppHandle) {
+    let _ = APP.set(app.clone());
     defaults::apply_once(app);
     brain::init(app);
 }
@@ -166,6 +201,21 @@ pub fn shape_model_list(list: &mut Vec<ModelInfo>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn command_press_upgrades_a_main_session_once() {
+        assert!(!upgrade_to_command(
+            "transcribe",
+            "transcribe_with_post_process"
+        ));
+        assert!(!upgrade_to_command("cancel", "transcribe"));
+        assert!(upgrade_to_command(
+            "transcribe_with_post_process",
+            "transcribe"
+        ));
+        assert!(take_command_upgrade());
+        assert!(!take_command_upgrade());
+    }
 
     #[test]
     fn model_picker_hides_non_chat_models() {

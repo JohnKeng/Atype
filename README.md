@@ -45,6 +45,8 @@ flowchart LR
 | 路徑 | 內容 |
 |---|---|
 | [`apps/mac/`](apps/mac/README.md) | Mac App。Atype 自己的程式在 `src-tauri/src/atype/` |
+| [`site/`](site/index.html) | 產品介紹頁（GitHub Pages） |
+| [`docs/demo-script.md`](docs/demo-script.md) | 錄影與測試腳本 |
 | [`docs/PLAN.md`](docs/PLAN.md) | 決策、下一步、iPhone 鍵盤計畫、模型、prompt、測試句 |
 | [`docs/architecture.html`](docs/architecture.html) | 圖解架構：Mac 與 iPhone 鍵盤的流程、和 Typeless 的功能對照 |
 | [`docs/archive/`](docs/archive/README.md) | 早期研究與商用版方案，不再維護 |

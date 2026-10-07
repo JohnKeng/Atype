@@ -24,8 +24,9 @@ pub struct AtypeConfig {
     /// Time budget for the LLM. When it is exceeded the deterministic result
     /// of the raw transcription is pasted instead of waiting.
     pub llm_timeout_ms: u64,
-    /// The main hotkey (not only the separate post-process hotkey) runs the
-    /// LLM whenever post-processing is enabled in Advanced settings.
+    /// The main hotkey also runs the LLM cleanup (adds 1-2 s). Off by default:
+    /// the main hotkey pastes the local result at once and the command
+    /// hotkey is the AI one.
     pub llm_on_main_hotkey: bool,
     /// Append every transcription to the second-brain folder.
     pub brain_enabled: bool,
@@ -37,10 +38,6 @@ pub struct AtypeConfig {
     pub defaults_version: u32,
     /// Personal dictionary (see `atype::dictionary`).
     pub dictionary: Vec<super::dictionary::DictEntry>,
-    /// Prompt used by the command hotkey (Handy's "transcribe with
-    /// post-process" binding): turn a spoken outline into an email, notes,
-    /// ... The main hotkey keeps the prompt selected in 後處理.
-    pub command_prompt_id: String,
     /// Time budget for the command hotkey; writing a whole email takes longer
     /// than cleaning up a sentence.
     pub command_timeout_ms: u64,
@@ -51,12 +48,11 @@ impl Default for AtypeConfig {
         Self {
             zh_post_enabled: true,
             llm_timeout_ms: 2500,
-            llm_on_main_hotkey: true,
+            llm_on_main_hotkey: false,
             brain_enabled: true,
             brain_dir: None,
             defaults_version: 0,
             dictionary: Vec::new(),
-            command_prompt_id: super::prompts::SMART_ID.to_string(),
             command_timeout_ms: 12_000,
         }
     }

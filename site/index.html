@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atype · 說出來，就是好的繁體中文</title>
+<meta name="description" content="Mac 上的語音輸入。250 MB 本機模型，說 9 秒 0.12 秒就辨識完，聲音不離開你的電腦；需要時再多按一個鍵，AI 幫你寫成信件、訊息、會議記錄。">
+<meta property="og:title" content="Atype · 說出來，就是好的繁體中文">
+<meta property="og:description" content="250 MB 本機模型、比說話快 60 倍的 Mac 語音輸入。需要時一個鍵讓 AI 寫成信件、訊息、會議記錄。">
+<meta property="og:image" content="assets/poster.jpg">
+<link rel="icon" href="assets/favicon.png">
+<style>
+:root {
+  --bg: #faf6ee;
+  --bg-soft: #f3eedf;
+  --card: #fffdf8;
+  --text: #2b2a26;
+  --muted: #6d6a60;
+  --line: #e4ddc9;
+  --green: #6ab158;
+  --green-deep: #3f7f3a;
+  --green-soft: #e3efd9;
+  --ai1: #6ab158; --ai2: #2fb5a5; --ai3: #8b7cf6; --ai4: #f2b34b;
+  --radius: 18px;
+  --shadow: 0 1px 2px rgba(60, 50, 20, .06), 0 8px 30px rgba(60, 50, 20, .07);
+  --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1d1c19; --bg-soft: #24231f; --card: #2a2924; --text: #efebe0; --muted: #a8a397;
+    --line: #3a382f; --green: #a3d490; --green-deep: #6ab158; --green-soft: #2c3a27;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.25);
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--green-deep); }
+img, video { max-width: 100%; display: block; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+section { padding: 88px 0; }
+section.alt { background: var(--bg-soft); }
+h1, h2, h3 { line-height: 1.25; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: clamp(28px, 4vw, 40px); }
+h3 { font-size: 19px; }
+.eyebrow { font-size: 14px; font-weight: 600; color: var(--green-deep); letter-spacing: .08em; margin-bottom: 10px; }
+.lead { color: var(--muted); font-size: 18px; max-width: 640px; }
+.center { text-align: center; }
+.center .lead { margin-left: auto; margin-right: auto; }
+
+/* nav */
+nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; gap: 24px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--text); text-decoration: none; }
+.brand img { width: 32px; height: 32px; border-radius: 8px; }
+nav .links { margin-left: auto; display: flex; gap: 22px; font-size: 15px; }
+nav .links a { color: var(--muted); text-decoration: none; }
+nav .links a:hover { color: var(--text); }
+@media (max-width: 720px) { nav .links a:not(.btn) { display: none; } }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px; font-weight: 600; font-size: 16px; text-decoration: none; border: 1px solid transparent; transition: transform .15s, box-shadow .15s; }
+.btn:hover { transform: translateY(-1px); }
+.btn.primary { background: var(--green-deep); color: #fff; box-shadow: 0 6px 20px color-mix(in srgb, var(--green-deep) 35%, transparent); }
+.btn.ghost { border-color: var(--line); color: var(--text); background: var(--card); }
+nav .btn { padding: 7px 16px; font-size: 14px; }
+
+/* hero */
+.hero { padding: 72px 0 40px; text-align: center; }
+.hero .icon { width: 112px; height: 112px; margin: 0 auto 22px; border-radius: 26px; box-shadow: var(--shadow); }
+.hero h1 { font-size: clamp(36px, 6.4vw, 66px); font-weight: 800; }
+.hero h1 .accent { background: linear-gradient(90deg, var(--ai1), var(--ai2), var(--ai3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p.lead { margin: 20px auto 30px; font-size: clamp(17px, 2.2vw, 20px); }
+.hero .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.hero .note { margin-top: 14px; font-size: 14px; color: var(--muted); }
+
+/* speed stats */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 56px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 20px; text-align: center; box-shadow: var(--shadow); }
+.stat .num { font-size: clamp(30px, 4.6vw, 46px); font-weight: 800; color: var(--green-deep); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .num small { font-size: .45em; font-weight: 700; margin-left: 2px; }
+.stat .label { margin-top: 6px; color: var(--muted); font-size: 15px; }
+@media (max-width: 640px) { .stats { grid-template-columns: 1fr; } }
+.footnote { margin-top: 12px; font-size: 13px; color: var(--muted); text-align: center; }
+
+/* video */
+.video-frame { margin: 48px auto 0; max-width: 400px; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); background: #000; }
+
+/* hotkeys */
+.keys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 40px; }
+@media (max-width: 760px) { .keys-grid { grid-template-columns: 1fr; } }
+.keycard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow); position: relative; }
+.keycard.ai { border: 2px solid transparent; background: linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(135deg, var(--ai1), var(--ai2), var(--ai3), var(--ai4)) border-box; }
+.kbd-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 16px 0 18px; }
+kbd { font-family: var(--font); font-size: 15px; font-weight: 600; padding: 6px 12px; border-radius: 9px; background: var(--bg-soft); border: 1px solid var(--line); border-bottom-width: 3px; }
+.plus { color: var(--muted); }
+.keycard p { color: var(--muted); margin: 0 0 18px; }
+.keycard ul { margin: 0; padding-left: 20px; color: var(--muted); }
+.tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-deep); margin-bottom: 12px; }
+.tag.ai { background: linear-gradient(90deg, color-mix(in srgb, var(--ai3) 18%, transparent), color-mix(in srgb, var(--ai2) 18%, transparent)); color: var(--ai3); }
+
+/* overlay pills */
+.pill { display: inline-flex; align-items: center; gap: 12px; height: 40px; padding: 0 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); margin-bottom: 18px; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 1.9s infinite; }
+.pill .wave { display: flex; gap: 3px; align-items: center; height: 18px; }
+.pill .wave i { width: 4px; border-radius: 2px; background: var(--green); animation: bar 1s ease-in-out infinite; }
+.pill .wave i:nth-child(2) { animation-delay: .1s } .pill .wave i:nth-child(3) { animation-delay: .2s } .pill .wave i:nth-child(4) { animation-delay: .3s } .pill .wave i:nth-child(5) { animation-delay: .4s } .pill .wave i:nth-child(6) { animation-delay: .5s } .pill .wave i:nth-child(7) { animation-delay: .6s }
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+.pill.ai { border: 2px solid transparent; background: linear-gradient(var(--card), var(--card)) padding-box, conic-gradient(from var(--ang), var(--ai1), var(--ai2), var(--ai3), var(--ai4), var(--ai1)) border-box; box-shadow: 0 0 12px color-mix(in srgb, var(--ai3) 40%, transparent); animation: spin 2.4s linear infinite; }
+.pill.ai .spark { font-size: 16px; background: linear-gradient(135deg, var(--ai1), var(--ai3), var(--ai4)); -webkit-background-clip: text; background-clip: text; color: transparent; animation: twinkle 1.1s ease-in-out infinite; }
+.pill.ai .wave i { background: linear-gradient(180deg, var(--ai3), var(--ai2)); }
+.pill.ai .lbl { font-size: 13px; font-weight: 700; background: linear-gradient(90deg, var(--ai1), var(--ai2), var(--ai3), var(--ai4), var(--ai1)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 2s linear infinite; }
+@keyframes spin { to { --ang: 360deg; } }
+@keyframes twinkle { 50% { opacity: .5; transform: scale(.8) rotate(20deg); } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes pulse { 50% { opacity: .45; } }
+@keyframes bar { 0%, 100% { height: 5px; } 50% { height: 18px; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+/* examples */
+.examples { display: grid; gap: 18px; margin-top: 40px; }
+.ex { display: grid; grid-template-columns: 1fr auto 1.25fr; gap: 18px; align-items: start; }
+.ex .arrow { margin-top: 28px; }
+@media (max-width: 820px) { .ex { grid-template-columns: 1fr; } .ex .arrow { transform: rotate(90deg); justify-self: center; } }
+.bubble { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); }
+.bubble .who { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .06em; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.bubble.said { background: var(--bg-soft); box-shadow: none; }
+.bubble.said .text { color: var(--muted); }
+.bubble .text { white-space: pre-wrap; font-size: 15.5px; }
+.cue { display: inline-block; padding: 0 6px; border-radius: 6px; background: color-mix(in srgb, var(--ai3) 16%, transparent); color: var(--ai3); font-weight: 700; }
+.todo { background: color-mix(in srgb, var(--ai4) 22%, transparent); border-radius: 4px; padding: 0 3px; }
+.arrow { align-self: center; color: var(--muted); font-size: 22px; }
+
+/* cue chips */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 30px; }
+.chip { padding: 10px 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 15px; box-shadow: var(--shadow); }
+.chip b { color: var(--ai3); margin-right: 6px; }
+
+/* features */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+@media (max-width: 900px) { .features { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
+.feature { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+.feature .ico { font-size: 26px; margin-bottom: 10px; }
+.feature p { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
+
+/* screenshots */
+.shots { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 24px; margin-top: 56px; align-items: start; }
+.shots figure:nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
+@media (max-width: 820px) { .shots { grid-template-columns: 1fr; } .shots figure:nth-child(3) { grid-column: auto; grid-row: auto; } }
+.shots figure { margin: 0; }
+.shots figcaption { text-align: center; font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+/* privacy */
+.privacy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; }
+@media (max-width: 760px) { .privacy { grid-template-columns: 1fr; } }
+.privacy div { border-left: 3px solid var(--green); padding: 4px 0 4px 16px; }
+.privacy p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+
+/* install */
+.steps { counter-reset: s; display: grid; gap: 14px; margin: 36px auto 0; max-width: 760px; }
+.step { counter-increment: s; display: grid; grid-template-columns: 40px 1fr; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+.step::before { content: counter(s); width: 32px; height: 32px; border-radius: 50%; background: var(--green-deep); color: #fff; display: grid; place-items: center; font-weight: 700; }
+.step p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+.step > div { min-width: 0; }
+.step code { overflow-wrap: anywhere; }
+pre { background: #22211d; color: #efe9d8; padding: 14px 16px; border-radius: 12px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.6; margin: 10px 0 0; }
+code { font-family: var(--mono); font-size: .92em; background: var(--bg-soft); padding: 1px 6px; border-radius: 5px; }
+pre code { background: none; padding: 0; }
+
+/* faq */
+details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; margin: 12px auto 0; max-width: 760px; }
+summary { cursor: pointer; font-weight: 600; }
+details p { color: var(--muted); margin: 10px 0 0; }
+
+footer { padding: 40px 0 56px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#"><img src="assets/icon.png" alt="">Atype</a>
+    <div class="links">
+      <a href="#speed">速度</a>
+      <a href="#ai">AI 指令</a>
+      <a href="#features">功能</a>
+      <a href="#install">安裝</a>
+      <a class="btn primary" href="https://github.com/JohnKeng/Atype/releases/latest">下載</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <img class="icon" src="assets/icon.png" alt="Atype 圖示：一隻拿著筆的綠色鸚鵡">
+    <h1>說出來，<br>就是<span class="accent">好的繁體中文</span></h1>
+    <p class="lead">Mac 上的語音輸入。按住熱鍵說話、放開就貼上。<strong>250 MB 的本機模型，比你說話快 60 倍</strong>，聲音不離開你的電腦。需要的時候再多按一個鍵，AI 幫你寫成信件、訊息、會議記錄。</p>
+    <div class="ctas">
+      <a class="btn primary" href="https://github.com/JohnKeng/Atype/releases/latest">⬇︎ 下載 Mac 版</a>
+      <a class="btn ghost" href="https://github.com/JohnKeng/Atype">GitHub 原始碼</a>
+    </div>
+    <div class="note">免費 · Apple 晶片（M1 以後）的 Mac · 繁體中文優先，中英夾雜沒問題</div>
+
+    <div class="video-frame">
+      <video src="assets/demo.mp4" poster="assets/poster.jpg" controls playsinline preload="metadata"></video>
+    </div>
+  </div>
+</header>
+
+<section id="speed">
+  <div class="wrap center">
+    <div class="eyebrow">本機模型</div>
+    <h2>小，快，而且就在你的 Mac 上</h2>
+    <p class="lead">辨識用的是 SenseVoice Small，跑在 Apple 晶片的 GPU 上。不必上傳、不必排隊等伺服器，放開熱鍵的那一刻字就到了。</p>
+    <div class="stats">
+      <div class="stat"><div class="num">250<small>MB</small></div><div class="label">整個語音模型，第一次開啟下載一次</div></div>
+      <div class="stat"><div class="num">0.12<small>秒</small></div><div class="label">辨識完一段 9 秒的話</div></div>
+      <div class="stat"><div class="num">60<small>倍</small></div><div class="label">比即時還快（實測 57～75 倍）</div></div>
+    </div>
+    <div class="footnote">實測環境：MacBook Pro M3 Pro。辨識時間取自 App 的紀錄，不含你說話的時間。</div>
+  </div>
+</section>
+
+<section class="alt" id="ai">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">兩個熱鍵</div>
+      <h2>平常秒貼，需要時交給 AI</h2>
+      <p class="lead">主轉錄完全在本機，零等待。想要 AI 幫你寫，在同一組鍵上多按一個 ←，甚至可以說到一半才按。</p>
+    </div>
+    <div class="keys-grid">
+      <div class="keycard">
+        <span class="tag">主轉錄 · 本機</span>
+        <div class="kbd-row"><kbd>右 ⌘</kbd><span class="plus">+</span><kbd>右 ⌥</kbd></div>
+        <div class="pill" aria-hidden="true"><span class="dot"></span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+        <p>按住說，放開就貼進目前的 App。</p>
+        <ul>
+          <li>繁體、全形標點、中英之間的空格由程式保證，不靠 AI</li>
+          <li>詞典自動修正常聽錯的人名、產品名</li>
+          <li>斷網也能用</li>
+        </ul>
+      </div>
+      <div class="keycard ai">
+        <span class="tag ai">✦ AI 指令</span>
+        <div class="kbd-row"><kbd>右 ⌘</kbd><span class="plus">+</span><kbd>右 ⌥</kbd><span class="plus">+</span><kbd>←</kbd></div>
+        <div class="pill ai" aria-hidden="true"><span class="spark">✦</span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="lbl">AI 撰寫中…</span></div>
+        <p>簡單講內容或大綱，開頭說要什麼格式。</p>
+        <ul>
+          <li>寫成正式信件、訊息回覆、會議記錄、待辦、公告、英文…</li>
+          <li>只用你說到的事，缺的資訊標【待補】，不亂編</li>
+          <li>浮窗變成彩色外框，一眼就知道 AI 在處理</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">你說的 → 貼上的</div>
+      <h2>講重點就好，格式交給它</h2>
+    </div>
+    <div class="examples">
+      <div class="ex">
+        <div class="bubble said"><div class="who">🎙 主轉錄</div><div class="text">我想約明天下午3點半在火車站旁邊的星巴克呃不對是路易莎</div></div>
+        <div class="arrow">→</div>
+        <div class="bubble"><div class="who">AI 整理（不說口令）</div><div class="text">我想約明天下午 3:30 在火車站旁邊的路易莎。</div></div>
+      </div>
+      <div class="ex">
+        <div class="bubble said"><div class="who">🎙 AI 指令</div><div class="text"><span class="cue">回信</span>給陳經理，謝謝他詢價，我們這週五前會把報價單寄給他，價格跟上次一樣，但是運費另外算，請他確認一下數量</div></div>
+        <div class="arrow">→</div>
+        <div class="bubble"><div class="who">正式信件</div><div class="text">主旨：關於貴司詢價事宜回覆
+
+<span class="todo">【待補：稱謂】</span>您好：
+
+感謝您的來信詢問。關於報價事宜，回覆如下：
+1. 本公司將於本週五前將報價單寄送給您。
+2. 產品單價與上次相同，運費另行計算。
+3. 煩請協助確認採購數量。
+
+敬祝 商祺
+
+<span class="todo">【待補：署名】</span></div></div>
+      </div>
+      <div class="ex">
+        <div class="bubble said"><div class="who">🎙 AI 指令</div><div class="text"><span class="cue">會議記錄</span>，今天跟小王還有阿則討論新版上線，決定十月二十號上線，小王負責測試，阿則下週一前要把文件寫好</div></div>
+        <div class="arrow">→</div>
+        <div class="bubble"><div class="who">會議記錄</div><div class="text">會議主題：新版上線討論
+與會人員：小王、阿則
+
+決議事項
+1. 新版上線日期定為 10 月 20 日。
+
+待辦事項
+- [ ] 進行測試（負責人：小王；期限：<span class="todo">【待補】</span>）
+- [ ] 完成文件撰寫（負責人：阿則；期限：下週一）</div></div>
+      </div>
+      <div class="ex">
+        <div class="bubble said"><div class="who">🎙 AI 指令</div><div class="text"><span class="cue">回訊息</span>，跟他說好啊沒問題，我晚點把檔案傳給他</div></div>
+        <div class="arrow">→</div>
+        <div class="bubble"><div class="who">LINE / Slack</div><div class="text">好啊沒問題，我晚點把檔案傳給你</div></div>
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip"><b>回信</b>正式信件</span>
+      <span class="chip"><b>回訊息</b>LINE、Slack</span>
+      <span class="chip"><b>條列</b>重點整理</span>
+      <span class="chip"><b>會議記錄</b>決議與待辦</span>
+      <span class="chip"><b>待辦</b>勾選清單</span>
+      <span class="chip"><b>公告</b>通知同事</span>
+      <span class="chip"><b>正式一點</b>改書面語氣</span>
+      <span class="chip"><b>翻英文</b>道地英文</span>
+    </div>
+    <p class="footnote">沒說口令，就只做口語整理：去掉贅詞、只留你最後的說法，意思不變。</p>
+  </div>
+</section>
+
+<section class="alt" id="features">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">為中文而做</div>
+      <h2>細節都替你想好了</h2>
+    </div>
+    <div class="features">
+      <div class="feature"><div class="ico">⚡️</div><h3>本機辨識，零等待</h3><p>250 MB 的 SenseVoice Small 跑在 Apple 晶片上，9 秒的話 0.12 秒辨識完。中英夾雜、台灣口音都聽得懂。</p></div>
+      <div class="feature"><div class="ico">🀄️</div><h3>繁體由程式保證</h3><p>每一句都經過台灣正體轉換、全形標點、中英空格。不靠 AI 記得，所以不會突然冒出簡體字。</p></div>
+      <div class="feature"><div class="ico">📖</div><h3>會學你的詞</h3><p>把常被聽錯的人名、產品名加進詞典。中文詞自動比對同音字（「城市馬」→「程式碼」），英文詞列出錯法就好。</p></div>
+      <div class="feature"><div class="ico">✦</div><h3>提示詞隨你改</h3><p>內建 10 種格式，都可以修改，也能新增自己的，例如「週報」。AI 指令就照你寫的規則輸出。</p></div>
+      <div class="feature"><div class="ico">⏱️</div><h3>AI 慢了也不卡</h3><p>AI 超過時間沒回來，就直接貼本機處理好的版本，不會讓你乾等。</p></div>
+      <div class="feature"><div class="ico">🧠</div><h3>每句都留底</h3><p>每一次輸入都存成每日 Markdown 和 JSONL，可以放 iCloud，之後搜尋、回顧、餵給自己的筆記系統。</p></div>
+    </div>
+
+    <div class="shots">
+      <figure><img src="assets/prompts.webp" alt="提示詞管理視窗：左邊清單、右邊編輯" loading="lazy"><figcaption>提示詞：左邊選、右邊改</figcaption></figure>
+      <figure><img src="assets/dictionary.webp" alt="詞典視窗：正確寫法與常見錯法" loading="lazy"><figcaption>詞典：寫一次就記住</figcaption></figure>
+      <figure><img src="assets/personal.webp" alt="個人化頁面：使用量、詞典、第二大腦與整理設定" loading="lazy"><figcaption>個人化：用量、詞典、存放位置</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">隱私</div>
+      <h2>你的聲音只在你的 Mac 上</h2>
+    </div>
+    <div class="privacy">
+      <div><h3>聲音不上傳</h3><p>錄音和辨識都在本機完成，主轉錄完全不需要網路。</p></div>
+      <div><h3>AI 用你自己的 key</h3><p>只有按 AI 指令時，辨識好的文字會送到你自己的 Gemini API key；不送音訊、視窗標題或網址。</p></div>
+      <div><h3>沒有帳號、不蒐集</h3><p>不用註冊，Atype 不回傳任何資料，紀錄只存在你指定的資料夾。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="install">
+  <div class="wrap">
+    <div class="center"><div class="eyebrow">安裝</div>
+    <h2>五分鐘開始用</h2></div>
+    <div class="steps">
+      <div class="step"><div><h3>下載並拖進「應用程式」</h3><p>到 <a href="https://github.com/JohnKeng/Atype/releases/latest">Releases</a> 下載 <code>Atype-…-macos-arm64.zip</code>，解壓縮後把 Atype.app 拖進「應用程式」。</p></div></div>
+      <div class="step"><div><h3>第一次打開：按「仍要打開」</h3><p>Atype 沒有經過 Apple 公證，macOS 會先擋下來。到「系統設定 → 隱私權與安全性」，往下找到 Atype，按「仍要打開」。只需要一次。如果出現「已損毀」，在終端機執行：</p><pre><code>xattr -dr com.apple.quarantine /Applications/Atype.app</code></pre></div></div>
+      <div class="step"><div><h3>給麥克風與輔助使用權限</h3><p>照 App 的指示授權。輔助使用是用來把字貼進其他 App。</p></div></div>
+      <div class="step"><div><h3>下載語音模型（250 MB）</h3><p>首頁選 SenseVoice Small，下載一次就好。</p></div></div>
+      <div class="step"><div><h3>（選用）填入你的 Gemini API key</h3><p>到 <a href="https://aistudio.google.com/apikey">Google AI Studio</a> 免費建立，貼到「後處理」頁。不填也能用主轉錄，只是沒有 AI 指令。</p></div></div>
+    </div>
+    <details>
+      <summary>想自己從原始碼編？</summary>
+      <p>需要 Xcode Command Line Tools、Rust、bun、cmake，第一次約 5 到 10 分鐘。自己編的版本不會被 macOS 擋。</p>
+      <pre><code>git clone https://github.com/JohnKeng/Atype.git
+cd Atype/apps/mac
+bun install
+bun run app:install</code></pre>
+    </details>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="center"><div class="eyebrow">常見問題</div>
+    <h2>問與答</h2></div>
+    <div style="height:24px"></div>
+    <details><summary>要錢嗎？</summary><p>Atype 免費。主轉錄完全在本機，不花錢。AI 指令用你自己的 Gemini API key，一個人每天說 3,000 字大約每月 US$0.5，而且 Google 有免費額度。</p></details>
+    <details><summary>Intel 的 Mac 可以用嗎？</summary><p>目前只提供 Apple 晶片（M1 以後）的版本。</p></details>
+    <details><summary>可以換熱鍵嗎？</summary><p>可以。「一般」頁改主轉錄，「後處理」頁改 AI 指令。建議 AI 指令設成主轉錄再加一個鍵，就能說到一半再升級成 AI。</p></details>
+    <details><summary>沒網路時怎麼辦？</summary><p>主轉錄照常運作。AI 指令會在時間到之後，貼上本機處理過的版本。</p></details>
+    <details><summary>有 iPhone 版嗎？</summary><p>正在做。會是一個和 Typeless 一樣用法的鍵盤，辨識同樣在手機本機完成。</p></details>
+    <details><summary>更新之後貼不上字？</summary><p>到「系統設定 → 隱私權與安全性 → 輔助使用」，選 Atype 按「−」刪掉，再按「＋」加回 /Applications/Atype.app，然後重開 Atype。</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Atype · 說出來，就是好的繁體中文</span>
+    <span><a href="https://github.com/JohnKeng/Atype">GitHub</a> · 桌面外殼基於 <a href="https://github.com/cjpais/Handy">Handy</a>（MIT）</span>
+  </div>
+</footer>
+
+</body>
+</html>

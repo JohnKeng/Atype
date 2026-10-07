@@ -178,8 +178,8 @@
             "description": "用於取消目前錄製的鍵盤快捷鍵"
           },
           "transcribe_with_post_process": {
-            "name": "後處理快捷鍵",
-            "description": "可選：專用快捷鍵，使用時一律對轉錄結果套用 AI 後處理"
+            "name": "AI 指令快捷鍵",
+            "description": "按住說內容或大綱，AI 依「後處理」頁選的提示詞（預設萬用口令）寫成信件、訊息、會議記錄等格式。設成主熱鍵再加一個鍵（例如 ←）時，可以先按主熱鍵開始說，再補按那個鍵升級成 AI"
           }
         },
         "errors": {
@@ -230,7 +230,9 @@
         "soundOnly": "留空：中文詞會自動比對同音字",
         "add": "新增",
         "remove": "刪除",
-        "empty": "還沒有詞條。中文詞只要填正確寫法，同音的錯字會自動修正（例如「程式碼」會修好「城市馬」）；英文詞請把聽錯的拼法填在錯法欄。"
+        "empty": "還沒有詞條。中文詞只要填正確寫法，同音的錯字會自動修正（例如「程式碼」會修好「城市馬」）；英文詞請把聽錯的拼法填在錯法欄。",
+        "summary": "{{count}} 個詞條",
+        "edit": "編輯詞典…"
       },
       "brain": {
         "title": "第二大腦",
@@ -251,20 +253,16 @@
       "cleanup": {
         "title": "整理",
         "mainHotkey": {
-          "label": "主熱鍵也用 AI 整理",
-          "description": "開啟「後處理」時，主熱鍵也會讓 AI 整理文字"
+          "label": "主熱鍵也用 AI 整理（會慢 1～2 秒）",
+          "description": "預設關閉：主熱鍵只在本機處理，放開就貼上。打開後主熱鍵會用「整理口語」去贅詞、修語句"
         },
         "timeout": {
           "label": "LLM 時間預算",
           "description": "AI 超過這個時間就直接貼上排版後的原文",
           "value": "{{seconds}} 秒"
         },
-        "commandPrompt": {
-          "title": "指令熱鍵的提示詞",
-          "description": "按「後處理」熱鍵（預設右 Option + 右 Command）說話時用這個提示詞，例如把大綱寫成正式信件。主熱鍵仍只做口語整理"
-        },
         "commandTimeout": {
-          "label": "指令熱鍵時間預算",
+          "label": "AI 指令時間預算",
           "description": "寫信、會議記錄需要較久；超過時間就貼上排版後的原文"
         },
         "zhPost": {
@@ -283,6 +281,22 @@
         "save": "儲存失敗：{{error}}",
         "open": "無法打開資料夾：{{error}}",
         "polish": "排版失敗：{{error}}"
+      },
+      "prompts": {
+        "manage": "管理提示詞…",
+        "dialogTitle": "提示詞",
+        "dialogDescription": "AI 指令快捷鍵用「使用中」的那一個；主熱鍵開 AI 時固定用「整理口語」",
+        "close": "關閉",
+        "inUse": "使用中",
+        "untitled": "新的提示詞",
+        "add": "新增提示詞",
+        "namePlaceholder": "名稱，例如：週報",
+        "tip": "文字裡的 ${output} 會換成你說的內容（必須有）。",
+        "create": "建立",
+        "save": "儲存",
+        "use": "設為使用中",
+        "cancel": "取消",
+        "delete": "刪除"
       }
     },
     "models": {
@@ -520,8 +534,8 @@
       "prompts": {
         "title": "提示詞",
         "selectedPrompt": {
-          "title": "已選提示詞",
-          "description": "選擇用於最佳化轉錄的範本或建立新範本。在提示詞文字中使用 ${output} 來引用轉錄結果"
+          "title": "AI 指令快捷鍵的提示詞",
+          "description": "AI 指令快捷鍵用這個提示詞；預設「萬用口令」會依你開頭說的口令（回信、條列、會議記錄…）決定格式。主熱鍵固定用「整理口語」。在提示詞文字中使用 ${output} 來引用轉錄結果"
         },
         "noPrompts": "沒有可用的提示詞",
         "selectPrompt": "選擇提示詞",
@@ -708,18 +722,6 @@
         "title": "支持開發",
         "description": "幫助我們繼續開發 Atype",
         "button": "捐贈"
-      },
-      "acknowledgments": {
-        "title": "致謝",
-        "ggml": {
-          "title": "ggml",
-          "description": "針對 OpenAI Whisper 自動語音辨識模型的高效能推理引擎",
-          "details": "Atype 使用 ggml 進行快速的本機語音轉文字處理。感謝 Georgi Gerganov 和貢獻者們的傑出工作"
-        },
-        "handy": {
-          "title": "Handy",
-          "description": "Atype 的桌面殼（熱鍵、貼上、浮窗、模型執行）基於 CJ Pais 的 Handy，MIT 授權。"
-        }
       },
       "whatsNewUpdates": {
         "label": "顯示新功能",

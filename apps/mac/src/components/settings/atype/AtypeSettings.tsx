@@ -11,8 +11,7 @@ import { Slider } from "../../ui/Slider";
 import { Button } from "../../ui/Button";
 import { Textarea } from "../../ui/Textarea";
 import { DictionaryEditor } from "./DictionaryEditor";
-import { Dropdown } from "../../ui/Dropdown";
-import { useSettings } from "../../../hooks/useSettings";
+import { Dialog } from "../../ui/Dialog";
 
 const SAMPLE_TEXT = "我们明天下午3:30开会,地点在Costco旁边.";
 const STATS_REFRESH_DELAY_MS = 500;
@@ -34,7 +33,6 @@ const toConfig = (view: AtypeConfigView): AtypeConfig => ({
   brain_dir: view.brain_dir,
   defaults_version: view.defaults_version,
   dictionary: view.dictionary,
-  command_prompt_id: view.command_prompt_id,
   command_timeout_ms: view.command_timeout_ms,
 });
 
@@ -43,12 +41,11 @@ const errorText = (error: unknown) =>
 
 export const AtypeSettings: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { getSetting } = useSettings();
-  const prompts = getSetting("post_process_prompts") || [];
   const [config, setConfig] = useState<AtypeConfigView | null>(null);
   const [stats, setStats] = useState<AtypeStats>(EMPTY_STATS);
   const [sample, setSample] = useState(SAMPLE_TEXT);
   const [polished, setPolished] = useState<string | null>(null);
+  const [dictOpen, setDictOpen] = useState(false);
   const configRef = useRef<AtypeConfigView | null>(null);
   const saveSeq = useRef(0);
 
@@ -219,16 +216,37 @@ export const AtypeSettings: React.FC = () => {
       </SettingsGroup>
 
       {config && (
-        <SettingsGroup
-          title={t("settings.atype.dictionary.title")}
-          description={t("settings.atype.dictionary.description")}
-        >
-          <div className="px-4 py-3">
+        <SettingsGroup title={t("settings.atype.dictionary.title")}>
+          <SettingContainer
+            title={t("settings.atype.dictionary.summary", {
+              count: config.dictionary.length,
+            })}
+            description={t("settings.atype.dictionary.description")}
+            descriptionMode="inline"
+            grouped={true}
+          >
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setDictOpen(true)}
+            >
+              {t("settings.atype.dictionary.edit")}
+            </Button>
+          </SettingContainer>
+          <Dialog
+            open={dictOpen}
+            onOpenChange={setDictOpen}
+            title={t("settings.atype.dictionary.title")}
+            description={t("settings.atype.dictionary.description")}
+            closeLabel={t("settings.atype.prompts.close")}
+            className="max-w-3xl h-[min(600px,calc(100dvh-3rem))]"
+            contentClassName="flex-1"
+          >
             <DictionaryEditor
               entries={config.dictionary}
               onSave={(dictionary) => update({ dictionary })}
             />
-          </div>
+          </Dialog>
         </SettingsGroup>
       )}
 
@@ -311,18 +329,6 @@ export const AtypeSettings: React.FC = () => {
             }
             grouped={true}
           />
-          <SettingContainer
-            title={t("settings.atype.cleanup.commandPrompt.title")}
-            description={t("settings.atype.cleanup.commandPrompt.description")}
-            grouped={true}
-          >
-            <Dropdown
-              className="min-w-56"
-              options={prompts.map((p) => ({ value: p.id, label: p.name }))}
-              selectedValue={config.command_prompt_id}
-              onSelect={(id) => update({ command_prompt_id: id })}
-            />
-          </SettingContainer>
           <Slider
             value={config.command_timeout_ms}
             onChange={(ms) => update({ command_timeout_ms: ms })}

@@ -740,8 +740,9 @@ fn default_post_process_api_keys() -> SecretMap {
     SecretMap(map)
 }
 
-/// Atype: the zh-TW cleanup prompt, selected out of the box.
-pub const DEFAULT_PROMPT_ID: &str = crate::atype::prompts::CLEANUP_ID;
+/// Atype: the prompt selected out of the box. The selection is the command
+/// hotkey's prompt; the main hotkey always uses the cleanup prompt.
+pub const DEFAULT_PROMPT_ID: &str = crate::atype::prompts::SMART_ID;
 
 /// Atype: default Gemini model for the cleanup (fast, cheap, plain chat API).
 pub const DEFAULT_GEMINI_MODEL: &str = "models/gemini-3.1-flash-lite";

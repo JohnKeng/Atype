@@ -178,8 +178,8 @@
             "description": "The keyboard shortcut to cancel the current recording."
           },
           "transcribe_with_post_process": {
-            "name": "Post-Processing Hotkey",
-            "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
+            "name": "AI command hotkey",
+            "description": "Dictate content or an outline; the AI writes it in the format of the prompt selected on this page (default: smart command) such as an email, chat reply or meeting notes. If it is the main hotkey plus one key (e.g. ←), you can start with the main hotkey and add that key to upgrade to AI"
           }
         },
         "errors": {
@@ -230,7 +230,9 @@
         "soundOnly": "Empty: Chinese terms also match same-sounding characters",
         "add": "Add",
         "remove": "Remove",
-        "empty": "No entries yet. For a Chinese term the correct spelling is enough: same-sounding mistakes are fixed automatically. For English terms, list the misheard spellings."
+        "empty": "No entries yet. For a Chinese term the correct spelling is enough: same-sounding mistakes are fixed automatically. For English terms, list the misheard spellings.",
+        "summary": "{{count}} entries",
+        "edit": "Edit dictionary…"
       },
       "brain": {
         "title": "Second Brain",
@@ -251,20 +253,16 @@
       "cleanup": {
         "title": "Cleanup",
         "mainHotkey": {
-          "label": "AI Cleanup on Main Hotkey",
-          "description": "When post-processing is on, the main hotkey also runs the AI cleanup"
+          "label": "Main hotkey also uses AI cleanup (1-2 s slower)",
+          "description": "Off by default: the main hotkey stays local and pastes at once. When on, it runs the cleanup prompt"
         },
         "timeout": {
           "label": "LLM Time Budget",
           "description": "If the AI takes longer than this, the formatted raw text is pasted instead",
           "value": "{{seconds}} s"
         },
-        "commandPrompt": {
-          "title": "Command hotkey prompt",
-          "description": "Used when you dictate with the post-process hotkey (right Option + right Command by default), e.g. turn an outline into a formal email. The main hotkey still only cleans up"
-        },
         "commandTimeout": {
-          "label": "Command hotkey time budget",
+          "label": "AI command time budget",
           "description": "Emails and meeting notes take longer; past this the formatted original is pasted"
         },
         "zhPost": {
@@ -283,6 +281,22 @@
         "save": "Could not save: {{error}}",
         "open": "Could not open folder: {{error}}",
         "polish": "Formatting failed: {{error}}"
+      },
+      "prompts": {
+        "manage": "Manage prompts…",
+        "dialogTitle": "Prompts",
+        "dialogDescription": "The AI command hotkey uses the one marked In use; the main hotkey always uses the cleanup prompt when its AI is on",
+        "close": "Close",
+        "inUse": "In use",
+        "untitled": "New prompt",
+        "add": "New prompt",
+        "namePlaceholder": "Name, e.g. Weekly report",
+        "tip": "${output} is replaced with what you said (required).",
+        "create": "Create",
+        "save": "Save",
+        "use": "Use this one",
+        "cancel": "Cancel",
+        "delete": "Delete"
       }
     },
     "models": {
@@ -520,8 +534,8 @@
       "prompts": {
         "title": "Prompt",
         "selectedPrompt": {
-          "title": "Selected Prompt",
-          "description": "Select a template for refining transcriptions or create a new one. Use ${output} inside the prompt text to reference the captured transcript."
+          "title": "AI command prompt",
+          "description": "Used by the AI command hotkey; the default smart command picks the format from your first words (reply, bullets, meeting notes...). The main hotkey always uses the cleanup prompt. Use ${output} in the prompt text to reference the transcription"
         },
         "noPrompts": "No prompts available",
         "selectPrompt": "Select a prompt",
@@ -712,18 +726,6 @@
         "title": "Support Development",
         "description": "Help us continue building Atype",
         "button": "Donate"
-      },
-      "acknowledgments": {
-        "title": "Acknowledgments",
-        "ggml": {
-          "title": "ggml",
-          "description": "High-performance tensor library for on-device machine learning inference",
-          "details": "Atype's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
-        },
-        "handy": {
-          "title": "Handy",
-          "description": "Atype's desktop shell (hotkeys, paste, overlay, model runtime) is based on Handy by CJ Pais, MIT licensed."
-        }
       }
     }
   },

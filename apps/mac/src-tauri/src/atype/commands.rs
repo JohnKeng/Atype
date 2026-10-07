@@ -28,7 +28,6 @@ pub struct AtypeConfigView {
     pub brain_dir: Option<String>,
     pub defaults_version: u32,
     pub dictionary: Vec<super::dictionary::DictEntry>,
-    pub command_prompt_id: String,
     pub command_timeout_ms: u64,
     /// `brain_dir` after defaults and `~/` expansion (empty if unknown).
     pub resolved_brain_dir: String,
@@ -57,7 +56,6 @@ fn view(app: &AppHandle, cfg: AtypeConfig) -> AtypeConfigView {
         brain_dir: cfg.brain_dir,
         defaults_version: cfg.defaults_version,
         dictionary: cfg.dictionary,
-        command_prompt_id: cfg.command_prompt_id,
         command_timeout_ms: cfg.command_timeout_ms,
         resolved_brain_dir: resolved,
     }
