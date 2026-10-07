@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @State private var picking = false
     @State private var showKey = false
+    @FocusState private var editing: Bool
 
     /// Picking a provider fills in its URL and a sensible model.
     private var providerBinding: Binding<String> {
@@ -38,8 +39,11 @@ struct SettingsView: View {
                         set: { model.config.profile = $0 }
                     ), axis: .vertical)
                     .lineLimit(3...8)
-                    .onSubmit { model.saveConfig() }
-                    Button("儲存我的資料") { model.saveConfig() }
+                    .focused($editing)
+                    Button("儲存我的資料") {
+                        editing = false
+                        model.saveConfig()
+                    }
                 } header: { Text("我的資料") } footer: {
                     Text("AI 寫信、回訊息需要署名、職稱、公司時會直接用這裡的資料，不會再標【待補】。和 Mac 共用。")
                 }
@@ -104,6 +108,16 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("設定")
+            .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("完成") {
+                        editing = false
+                        model.saveConfig()
+                    }
+                }
+            }
             .sheet(isPresented: $picking) {
                 FolderPicker(initial: SharedFolder.picked() ?? SharedFolder.defaultICloudURL) { model.pickFolder($0) }
                     .ignoresSafeArea()

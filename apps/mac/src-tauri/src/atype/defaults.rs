@@ -13,7 +13,7 @@ use crate::settings::{
 use log::info;
 use tauri::AppHandle;
 
-pub const VERSION: u32 = 4;
+pub const VERSION: u32 = 5;
 
 /// Version 1: LLM cleanup on, Traditional output, a useful history size,
 /// no upstream "what's new" notes.
@@ -68,6 +68,11 @@ pub fn apply_v4(s: &mut AppSettings) {
     super::prompts::refresh_unedited(&mut s.post_process_prompts);
 }
 
+/// Version 5: refresh unedited presets again (萬用口令: 正式 is not a letter).
+pub fn apply_v5(s: &mut AppSettings) {
+    super::prompts::refresh_unedited(&mut s.post_process_prompts);
+}
+
 /// Setup is done once a transcription model has been chosen.
 pub fn setup_done(s: &AppSettings) -> bool {
     !s.selected_model.trim().is_empty()
@@ -95,6 +100,10 @@ pub fn apply_once(app: &AppHandle) {
     if applied == 3 {
         apply_v4(&mut settings);
         applied = 4;
+    }
+    if applied == 4 {
+        apply_v5(&mut settings);
+        applied = 5;
     }
     if applied == cfg.defaults_version {
         return;

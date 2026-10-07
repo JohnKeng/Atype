@@ -162,3 +162,16 @@ import Testing
         #expect(cfg.updatedAt > .distantPast)
     }
 }
+
+@Suite struct PresetRefreshTests {
+    @Test func uneditedOldPresetIsReplacedEditedIsKept() {
+        var cfg = SharedConfig()
+        let smart = Presets.smartID
+        let i = cfg.prompts.firstIndex { $0.id == smart }!
+        cfg.prompts[i].prompt = Presets.previous[smart]!.first!
+        cfg.prompts[0].prompt += "my edit"
+        cfg.addMissingPresets()
+        #expect(cfg.prompts[i].prompt == Presets.all.first { $0.id == smart }!.prompt)
+        #expect(cfg.prompts[0].prompt.hasSuffix("my edit"))
+    }
+}

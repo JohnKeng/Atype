@@ -21,7 +21,7 @@ public enum Profile {
     public static func prompt(_ profile: String) -> String? {
         let p = profile.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !p.isEmpty else { return nil }
-        return "\n<about_me>\n\(p)\n</about_me>\n以上是使用者本人的資料。需要署名、自稱、職稱、公司或聯絡方式時，直接使用這些資料，不要再標【待補】。\n"
+        return "\n<about_me>\n\(p)\n</about_me>\n以上是使用者本人的資料。只在輸出格式本來就需要署名、自稱、職稱、公司或聯絡方式時使用（例如信件、公告），不要再標【待補】；不要因為有這些資料就把內容改寫成信件或加上署名。\n"
     }
 }
 
@@ -29,14 +29,27 @@ public enum Presets {
     public static let cleanupID = "default_improve_transcriptions"
     public static let smartID = "atype_smart"
 
-    /// The built-in prompts, the same file the Mac app's Rust tests check.
-    public static let all: [Prompt] = {
+    private struct Entry: Decodable {
+        let id: String
+        let name: String
+        let prompt: String
+        let previous: [String]?
+    }
+
+    private static let entries: [Entry] = {
         guard let url = Bundle.module.url(forResource: "presets", withExtension: "json"),
               let data = try? Data(contentsOf: url),
-              let prompts = try? JSONDecoder().decode([Prompt].self, from: data)
+              let list = try? JSONDecoder().decode([Entry].self, from: data)
         else { return [] }
-        return prompts
+        return list
     }()
+
+    /// The built-in prompts, the same file the Mac app's Rust tests check.
+    public static let all: [Prompt] = entries.map { Prompt(id: $0.id, name: $0.name, prompt: $0.prompt) }
+
+    /// Texts each preset shipped with before; a stored copy equal to one of
+    /// them was never edited and can be replaced by the current text.
+    public static let previous: [String: [String]] = Dictionary(uniqueKeysWithValues: entries.map { ($0.id, $0.previous ?? []) })
 }
 
 public struct SharedConfig: Codable, Equatable, Sendable {
@@ -74,6 +87,13 @@ public struct SharedConfig: Codable, Equatable, Sendable {
     public mutating func addMissingPresets() {
         for p in Presets.all where !prompts.contains(where: { $0.id == p.id }) {
             prompts.append(p)
+        }
+        // Unedited built-ins follow the current text.
+        for p in Presets.all {
+            if let i = prompts.firstIndex(where: { $0.id == p.id }), prompts[i].prompt != p.prompt,
+               Presets.previous[p.id]?.contains(prompts[i].prompt) == true {
+                prompts[i].prompt = p.prompt
+            }
         }
         if !prompts.contains(where: { $0.id == commandPromptID }) {
             commandPromptID = prompts.first(where: { $0.id == Presets.smartID })?.id ?? prompts.first?.id ?? Presets.smartID

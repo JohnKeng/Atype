@@ -138,7 +138,7 @@ pub fn add_profile(settings: &mut crate::settings::AppSettings, profile: &str) {
         return;
     }
     let block = format!(
-        "\n<about_me>\n{p}\n</about_me>\n以上是使用者本人的資料。需要署名、自稱、職稱、公司或聯絡方式時，直接使用這些資料，不要再標【待補】。\n"
+        "\n<about_me>\n{p}\n</about_me>\n以上是使用者本人的資料。只在輸出格式本來就需要署名、自稱、職稱、公司或聯絡方式時使用（例如信件、公告），不要再標【待補】；不要因為有這些資料就把內容改寫成信件或加上署名。\n"
     );
     append_to_selected_prompt(settings, &block);
 }
