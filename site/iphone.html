@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atype for iPhone · 用說的打字</title>
+<meta name="description" content="Atype iPhone 鍵盤：在任何 App 裡點麥克風說話，自動跳回原本的 App、字插在游標處；AI 指令寫成信件、訊息、會議記錄；辨識在 iPhone 本機。">
+<meta property="og:title" content="Atype for iPhone · 用說的打字">
+<meta property="og:description" content="250 MB 本機模型、比說話快 60 倍的 Mac 語音輸入。需要時一個鍵讓 AI 寫成信件、訊息、會議記錄。">
+<meta property="og:image" content="assets/iphone-poster.jpg">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/icon.png" alt="">Atype</a>
+    <div class="links">
+      <a href="index.html">Mac</a>
+      <a class="current" href="iphone.html">iPhone</a>
+      <a href="#install">安裝</a>
+      <a class="btn primary" href="https://github.com/JohnKeng/Atype">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <img class="icon" src="assets/icon.png" alt="Atype 圖示：一隻拿著筆的綠色鸚鵡">
+    <h1>在任何 App 裡，<br><span class="accent">用說的打字</span></h1>
+    <p class="lead">Atype 的 iPhone 鍵盤。點麥克風，Atype 收音後<strong>自動跳回你正在打字的 App</strong>，說完字就插在游標處。辨識在手機本機完成，聲音不上傳。</p>
+    <div class="ctas">
+      <a class="btn primary" href="#install">編譯安裝步驟</a>
+      <a class="btn ghost" href="https://github.com/JohnKeng/Atype/tree/claude/typeless-cross-platform-5afuaf/apps/ios">原始碼</a>
+    </div>
+    <div class="note">目前沒有提供下載、也還沒上架 App Store，需要用 Xcode 自己編譯 · iOS 26 以上</div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="iphone-grid">
+      <div class="phone-frame">
+        <video src="assets/iphone-demo.mp4" poster="assets/iphone-poster.jpg" controls playsinline preload="metadata"></video>
+      </div>
+      <div class="phone-points">
+        <div><h3>點一下就開始，自動回到原本的 App</h3><p>點鍵盤上的麥克風，Atype 會先開始收音，接著自動跳回你正在打字的 App（LINE、訊息、郵件、Slack…）。說完再點一次，字就插進去。</p></div>
+        <div><h3>連續說不必再跳</h3><p>用完後麥克風待命幾分鐘（可設定，時間到就真的關掉），這段時間再點麥克風直接開始，不必再切換 App。</p></div>
+        <div><h3>✦ AI 指令</h3><p>左下的 ✦：說「回信」「回訊息」「會議記錄」「待辦」「正式一點」「翻英文」，寫成那個格式。署名、職稱用「我的資料」自動帶入。</p></div>
+        <div><h3>收到聲音看得見，說錯可以復原</h3><p>錄音時點點跟著音量起伏；插錯了按 ↶ 整段刪掉，再按 ↷ 放回來。</p></div>
+        <div><h3>在 iPhone 本機辨識</h3><p>用 Apple 內建的聽寫模型，聲音不上傳。提示詞、詞典、我的資料透過 iCloud 和 Mac 共用。</p></div>
+      </div>
+    </div>
+    <div class="phone-shots">
+      <figure><img src="assets/iphone-home.webp" alt="iPhone 首頁：AI 指令與提示詞" loading="lazy"><figcaption>首頁：聽寫與 AI 指令</figcaption></figure>
+      <figure><img src="assets/iphone-history.webp" alt="iPhone 歷史紀錄，依日期分組" loading="lazy"><figcaption>歷史：原文與結果</figcaption></figure>
+      <figure><img src="assets/iphone-dictionary.webp" alt="iPhone 詞典" loading="lazy"><figcaption>詞典：和 Mac 共用</figcaption></figure>
+      <figure><img src="assets/iphone-settings.webp" alt="iPhone 設定：辨識引擎與我的資料" loading="lazy"><figcaption>設定：辨識引擎、我的資料</figcaption></figure>
+    </div>
+  
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap center">
+    <div class="eyebrow">✦ AI 指令</div>
+    <h2>開頭說要什麼格式</h2>
+    <p class="lead">按左下的 ✦，簡單講內容或大綱。沒說口令就只整理口語；缺的資訊標【待補】，署名、職稱從「我的資料」帶入。</p>
+    <div class="chips">
+      <span class="chip"><b>回信</b>正式信件</span>
+      <span class="chip"><b>回訊息</b>LINE、Slack</span>
+      <span class="chip"><b>條列</b>重點整理</span>
+      <span class="chip"><b>會議記錄</b>決議與待辦</span>
+      <span class="chip"><b>待辦</b>勾選清單</span>
+      <span class="chip"><b>公告</b>通知同事</span>
+      <span class="chip"><b>正式一點</b>改書面語氣</span>
+      <span class="chip"><b>翻英文</b>道地英文</span>
+    </div>
+    <p class="footnote">提示詞可以在 iPhone 或 Mac 上修改、新增，兩邊透過 iCloud 共用。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">隱私</div>
+      <h2>聲音只在你的 iPhone 上</h2>
+    </div>
+    <div class="privacy">
+      <div><h3>本機辨識</h3><p>用 iPhone 內建的語音模型（Apple 聽寫辨識或長篇辨識），聲音不上傳。</p></div>
+      <div><h3>麥克風用完就關</h3><p>待命時間可設定（預設 3 分鐘），時間到或按 ✕ 就真的關掉麥克風，不會一直開著、也不影響音樂與藍牙耳機音質。</p></div>
+      <div><h3>AI 用你自己的 key</h3><p>只有 AI 指令會把辨識好的文字送到你設定的服務（支援 OpenAI 相容格式：Gemini、OpenAI、OpenRouter、Groq…）。key 只存在 iPhone 的鑰匙圈。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="install">
+  <div class="wrap">
+    <div class="center"><div class="eyebrow">安裝</div>
+    <h2>自己編譯，裝到 iPhone</h2>
+    <p class="lead">iPhone 版沒有提供下載。需要一台 Mac、完整的 Xcode 26 以上、<a href="https://github.com/yonaskolb/XcodeGen">XcodeGen</a>（<code>brew install xcodegen</code>），以及一個 Apple 帳號。</p></div>
+    <div class="steps">
+      <div class="step"><div><h3>下載原始碼並產生專案</h3><pre><code>git clone https://github.com/JohnKeng/Atype.git
+cd Atype/apps/ios
+xcodegen generate
+open Atype.xcodeproj</code></pre></div></div>
+      <div class="step"><div><h3>換成你的開發者帳號</h3><p>在 Xcode 選 Atype 與 AtypeKeyboard 兩個 target，「Signing &amp; Capabilities」的 Team 換成你的 Apple 帳號；Bundle ID 若衝突，把 <code>com.atype.ios</code> 改成你自己的（兩個 target 與 App Group 要一起改）。</p></div></div>
+      <div class="step"><div><h3>打開 iPhone 的開發者模式</h3><p>「設定 → 隱私權與安全性 → 開發者模式」，打開後手機會重新開機。接上 Mac，在 Xcode 選你的 iPhone 按執行。第一次要到「設定 → 一般 → VPN 與裝置管理」信任開發者。</p></div></div>
+      <div class="step"><div><h3>加入 Atype 鍵盤</h3><p>「設定 → 一般 → 鍵盤 → 鍵盤 → 新增鍵盤」選 Atype，再點進去打開「允許完全取用」（鍵盤才能請 Atype 收音並把字放回來）。</p></div></div>
+      <div class="step"><div><h3>（選用）設定 AI 與共用資料夾</h3><p>App 的「設定」：填 API key 啟用 AI 指令；「和 Mac 共用的資料夾」授權 iCloud 雲碟的 service-db/Atype，提示詞與詞典就和 Mac 共用。</p></div></div>
+    </div>
+    <p class="footnote">免費 Apple 帳號裝的 App 7 天後會失效，要重新從 Xcode 安裝；付費的 Apple Developer Program 沒有這個限制。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="center"><div class="eyebrow">常見問題</div>
+    <h2>問與答</h2></div>
+    <div style="height:24px"></div>
+    <details><summary>為什麼點麥克風會先跳到 Atype？</summary><p>Apple 不允許第三方鍵盤使用麥克風，所有語音鍵盤（Typeless、Wispr Flow…）都是由 App 在背景收音。Atype 收音後會自動跳回你原本的 App；待命時間內再點麥克風就不必再跳。</p></details>
+    <details><summary>自動跳回支援哪些 App？</summary><p>LINE、訊息、備忘錄、郵件、提醒事項、Gmail、Outlook、Slack、WhatsApp、Telegram、Messenger、Instagram、Threads、X、微信、Discord、Notion、Obsidian、ChatGPT、Claude、Chrome、Teams 等。其他 App 點左上角「◀」回去即可。</p></details>
+    <details><summary>可以在 App 裡直接用嗎？</summary><p>可以。首頁點麥克風說話，結果會自動複製，也能分享；歷史紀錄依日期分組。</p></details>
+    <details><summary>說錯了怎麼辦？</summary><p>鍵盤左側 ↶ 把剛插入的整段刪掉，↷ 再放回來。</p></details>
+    <details><summary>會存錄音檔嗎？</summary><p>不會。iPhone 版只存文字（App 內的歷史，以及授權後 iCloud 第二大腦裡的 atype.iphone.jsonl 與每日 Markdown）。</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Atype for iPhone · <a href="index.html">Mac 版</a></span>
+    <span><a href="https://github.com/JohnKeng/Atype">GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
