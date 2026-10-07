@@ -151,6 +151,19 @@ kbd { font-family: var(--font); font-size: 15px; font-weight: 600; padding: 6px 
 .shots figure { margin: 0; }
 .shots figcaption { text-align: center; font-size: 14px; color: var(--muted); margin-top: 6px; }
 
+/* iphone */
+.iphone-grid { display: grid; grid-template-columns: 300px 1fr; gap: 48px; align-items: start; margin-top: 44px; }
+@media (max-width: 820px) { .iphone-grid { grid-template-columns: 1fr; } }
+.phone-frame { border-radius: 36px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); background: #000; max-width: 300px; margin: 0 auto; }
+.phone-points { display: grid; gap: 16px; }
+.phone-points div { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+.phone-points p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+.phone-shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
+@media (max-width: 820px) { .phone-shots { grid-template-columns: repeat(2, 1fr); } }
+.phone-shots img { border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+.phone-shots figcaption { text-align: center; font-size: 14px; color: var(--muted); margin-top: 6px; }
+.phone-shots figure { margin: 0; }
+
 /* privacy */
 .privacy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; }
 @media (max-width: 760px) { .privacy { grid-template-columns: 1fr; } }
@@ -185,6 +198,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
     <div class="links">
       <a href="#speed">速度</a>
       <a href="#ai">AI 指令</a>
+      <a href="#iphone">iPhone</a>
       <a href="#features">功能</a>
       <a href="#install">安裝</a>
       <a class="btn primary" href="https://github.com/JohnKeng/Atype/releases/latest">下載</a>
@@ -201,7 +215,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       <a class="btn primary" href="https://github.com/JohnKeng/Atype/releases/latest">⬇︎ 下載 Mac 版</a>
       <a class="btn ghost" href="https://github.com/JohnKeng/Atype">GitHub 原始碼</a>
     </div>
-    <div class="note">免費 · Apple 晶片（M1 以後）的 Mac · 繁體中文優先，中英夾雜沒問題</div>
+    <div class="note">免費 · Mac（Apple 晶片）與 iPhone 鍵盤 · 繁體中文優先，中英夾雜沒問題</div>
 
     <div class="video-frame">
       <video src="assets/demo.mp4" poster="assets/poster.jpg" controls playsinline preload="metadata"></video>
@@ -213,7 +227,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
   <div class="wrap center">
     <div class="eyebrow">本機模型</div>
     <h2>小，快，而且就在你的 Mac 上</h2>
-    <p class="lead">辨識用的是 SenseVoice Small，跑在 Apple 晶片的 GPU 上。不必上傳、不必排隊等伺服器，放開熱鍵的那一刻字就到了。</p>
+    <p class="lead">Mac 版辨識用的是 SenseVoice Small，跑在 Apple 晶片的 GPU 上。不必上傳、不必排隊等伺服器，放開熱鍵的那一刻字就到了。</p>
     <div class="stats">
       <div class="stat"><div class="num">250<small>MB</small></div><div class="label">整個語音模型，第一次開啟下載一次</div></div>
       <div class="stat"><div class="num">0.12<small>秒</small></div><div class="label">辨識完一段 9 秒的話</div></div>
@@ -318,6 +332,34 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
   </div>
 </section>
 
+<section id="iphone">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">iPhone</div>
+      <h2>在任何 App 裡，用說的打字</h2>
+      <p class="lead">Atype 鍵盤裝好後，在 LINE、郵件、備忘錄的輸入框直接說話。字插在游標處，AI 指令、提示詞、詞典都跟 Mac 一樣。</p>
+    </div>
+    <div class="iphone-grid">
+      <div class="phone-frame">
+        <video src="assets/iphone-demo.mp4" poster="assets/iphone-poster.jpg" controls playsinline preload="metadata"></video>
+      </div>
+      <div class="phone-points">
+        <div><h3>點一下就開始，自動回到原本的 App</h3><p>點鍵盤上的麥克風，Atype 會先開始收音，接著自動跳回你正在打字的 App（LINE、訊息、郵件、Slack…）。說完再點一次，字就插進去。</p></div>
+        <div><h3>連續說不必再跳</h3><p>用完後麥克風待命幾分鐘（可設定，時間到就真的關掉），這段時間再點麥克風直接開始，不必再切換 App。</p></div>
+        <div><h3>✦ AI 指令</h3><p>左下的 ✦：說「回信」「回訊息」「會議記錄」「待辦」「正式一點」「翻英文」，寫成那個格式。署名、職稱用「我的資料」自動帶入。</p></div>
+        <div><h3>收到聲音看得見，說錯可以復原</h3><p>錄音時點點跟著音量起伏；插錯了按 ↶ 整段刪掉，再按 ↷ 放回來。</p></div>
+        <div><h3>在 iPhone 本機辨識</h3><p>用 Apple 內建的聽寫模型，聲音不上傳。提示詞、詞典、我的資料透過 iCloud 和 Mac 共用。</p></div>
+      </div>
+    </div>
+    <div class="phone-shots">
+      <figure><img src="assets/iphone-home.webp" alt="iPhone 首頁：AI 指令與提示詞" loading="lazy"><figcaption>首頁：聽寫與 AI 指令</figcaption></figure>
+      <figure><img src="assets/iphone-history.webp" alt="iPhone 歷史紀錄，依日期分組" loading="lazy"><figcaption>歷史：原文與結果</figcaption></figure>
+      <figure><img src="assets/iphone-dictionary.webp" alt="iPhone 詞典" loading="lazy"><figcaption>詞典：和 Mac 共用</figcaption></figure>
+      <figure><img src="assets/iphone-settings.webp" alt="iPhone 設定：辨識引擎與我的資料" loading="lazy"><figcaption>設定：辨識引擎、我的資料</figcaption></figure>
+    </div>
+  </div>
+</section>
+
 <section class="alt" id="features">
   <div class="wrap">
     <div class="center">
@@ -367,6 +409,15 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       <div class="step"><div><h3>（選用）填入你的 Gemini API key</h3><p>到 <a href="https://aistudio.google.com/apikey">Google AI Studio</a> 免費建立，貼到「後處理」頁。不填也能用主轉錄，只是沒有 AI 指令。</p></div></div>
     </div>
     <details>
+      <summary>iPhone 版怎麼裝？（要自己編譯）</summary>
+      <p>iPhone 版目前<strong>沒有提供下載</strong>，也還沒上架 App Store，要用 Mac 上的 Xcode 自己編譯、裝到手機。需要完整的 Xcode 26 以上、<a href="https://github.com/yonaskolb/XcodeGen">XcodeGen</a>，以及一個 Apple 帳號（免費帳號也可以，但 App 7 天後要重新安裝）。</p>
+      <pre><code>git clone https://github.com/JohnKeng/Atype.git
+cd Atype/apps/ios
+xcodegen generate
+open Atype.xcodeproj</code></pre>
+      <p>在 Xcode 裡把兩個 target（Atype、AtypeKeyboard）的 Team 換成你的帳號，接上 iPhone 按執行。iPhone 要先在「設定 → 隱私權與安全性」打開開發者模式。裝好後到「設定 → 一般 → 鍵盤 → 鍵盤 → 新增鍵盤」加入 Atype，並打開「允許完全取用」。</p>
+    </details>
+    <details>
       <summary>想自己從原始碼編？</summary>
       <p>需要 Xcode Command Line Tools、Rust、bun、cmake，第一次約 5 到 10 分鐘。自己編的版本不會被 macOS 擋。</p>
       <pre><code>git clone https://github.com/JohnKeng/Atype.git
@@ -386,7 +437,7 @@ bun run app:install</code></pre>
     <details><summary>Intel 的 Mac 可以用嗎？</summary><p>目前只提供 Apple 晶片（M1 以後）的版本。</p></details>
     <details><summary>可以換熱鍵嗎？</summary><p>可以。「一般」頁改主轉錄，「後處理」頁改 AI 指令。建議 AI 指令設成主轉錄再加一個鍵，就能說到一半再升級成 AI。</p></details>
     <details><summary>沒網路時怎麼辦？</summary><p>主轉錄照常運作。AI 指令會在時間到之後，貼上本機處理過的版本。</p></details>
-    <details><summary>有 iPhone 版嗎？</summary><p>正在做。會是一個和 Typeless 一樣用法的鍵盤，辨識同樣在手機本機完成。</p></details>
+    <details><summary>有 iPhone 版嗎？</summary><p>有，是一個跟 Typeless 一樣用法的鍵盤，辨識在手機本機完成。目前沒有提供下載，需要用 Xcode 自己編譯，步驟在上面「安裝」。</p></details>
     <details><summary>更新之後貼不上字？</summary><p>到「系統設定 → 隱私權與安全性 → 輔助使用」，選 Atype 按「−」刪掉，再按「＋」加回 /Applications/Atype.app，然後重開 Atype。</p></details>
   </div>
 </section>

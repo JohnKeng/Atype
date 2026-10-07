@@ -22,6 +22,20 @@ bun run app:install      # 編譯並安裝到「應用程式」
 
 兩種方式的詳細步驟、被擋時怎麼打開、第一次設定（下載模型、填 Gemini key、給權限）與每天的用法，都在 [`apps/mac/README.md`](apps/mac/README.md)。
 
+## iPhone
+
+跟 Typeless 一樣用法的鍵盤：點麥克風，Atype 收音後自動跳回原本的 App，說完字插在游標處；✦ AI 指令、提示詞、詞典、我的資料透過 iCloud 和 Mac 共用。辨識用 iPhone 內建的本機模型。
+
+**沒有提供下載，要自己用 Xcode 編譯**（Xcode 26+、[XcodeGen](https://github.com/yonaskolb/XcodeGen)、Apple 帳號；免費帳號裝的 App 7 天後要重裝）：
+
+```bash
+cd Atype/apps/ios
+xcodegen generate
+open Atype.xcodeproj
+```
+
+把 Atype 與 AtypeKeyboard 兩個 target 的 Team 換成你的帳號，接上 iPhone 執行；再到「設定 → 一般 → 鍵盤 → 鍵盤 → 新增鍵盤」加入 Atype 並打開「允許完全取用」。
+
 ## 怎麼運作
 
 ```mermaid
@@ -45,6 +59,7 @@ flowchart LR
 | 路徑 | 內容 |
 |---|---|
 | [`apps/mac/`](apps/mac/README.md) | Mac App。Atype 自己的程式在 `src-tauri/src/atype/` |
+| `apps/ios/` | iPhone App 與鍵盤（XcodeGen 專案），共用核心在 `AtypeCore/` |
 | [`site/`](site/index.html) | 產品介紹頁（GitHub Pages） |
 | [`docs/demo-script.md`](docs/demo-script.md) | 錄影與測試腳本 |
 | [`docs/PLAN.md`](docs/PLAN.md) | 決策、下一步、iPhone 鍵盤計畫、模型、prompt、測試句 |
