@@ -130,3 +130,26 @@ import Testing
         #expect(!LLMClient.isChatModel("models/gemini-3.8-live"))
     }
 }
+
+@Suite struct MacFormatTests {
+    /// What the Mac app's `atype::shared::push` writes (serde, RFC 3339 seconds).
+    @Test func readsTheMacFile() throws {
+        let json = #"{"version":1,"updated_at":"2026-10-07T10:14:01Z","prompts":[{"id":"atype_email","name":"正式信件","prompt":"x ${output}"}],"command_prompt_id":"atype_email","dictionary":[{"term":"看門狗","aliases":[]}]}"#
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try Data(json.utf8).write(to: dir.appendingPathComponent(SharedConfig.fileName))
+        let cfg = SharedConfig.load(from: dir)
+        #expect(cfg.commandPromptID == "atype_email")
+        #expect(cfg.dictionary.first?.term == "看門狗")
+        #expect(cfg.prompts.count == Presets.all.count)
+        #expect(cfg.updatedAt > .distantPast)
+    }
+
+    @Test func readsTheRealSharedFileIfPresent() throws {
+        let url = URL(fileURLWithPath: NSHomeDirectory() + "/Library/Mobile Documents/com~apple~CloudDocs/service-db/Atype")
+        guard FileManager.default.fileExists(atPath: url.appendingPathComponent(SharedConfig.fileName).path) else { return }
+        let cfg = SharedConfig.load(from: url)
+        #expect(!cfg.dictionary.isEmpty)
+        #expect(cfg.updatedAt > .distantPast)
+    }
+}

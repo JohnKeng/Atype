@@ -1099,7 +1099,12 @@ dictionary: DictEntry[];
  * Time budget for the command hotkey; writing a whole email takes longer
  * than cleaning up a sentence.
  */
-command_timeout_ms: number }
+command_timeout_ms: number; 
+/**
+ * `updated_at` of the shared file (atype-shared.json) last applied or
+ * written. Managed by the app.
+ */
+shared_synced_at: string | null }
 /**
  * [`AtypeConfig`] plus the folder the second brain actually writes to.
  */

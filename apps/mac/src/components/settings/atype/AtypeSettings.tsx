@@ -34,6 +34,7 @@ const toConfig = (view: AtypeConfigView): AtypeConfig => ({
   defaults_version: view.defaults_version,
   dictionary: view.dictionary,
   command_timeout_ms: view.command_timeout_ms,
+  shared_synced_at: null,
 });
 
 const errorText = (error: unknown) =>

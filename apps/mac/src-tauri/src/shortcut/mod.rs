@@ -1183,6 +1183,7 @@ pub fn add_post_process_prompt(
 
     settings.post_process_prompts.push(new_prompt.clone());
     settings::write_settings(&app, settings);
+    crate::atype::shared::push(&app); // Atype: share with the iPhone
 
     Ok(new_prompt)
 }
@@ -1205,6 +1206,7 @@ pub fn update_post_process_prompt(
         existing_prompt.name = name;
         existing_prompt.prompt = prompt;
         settings::write_settings(&app, settings);
+        crate::atype::shared::push(&app); // Atype: share with the iPhone
         Ok(())
     } else {
         Err(format!("Prompt with id '{}' not found", id))
@@ -1236,6 +1238,7 @@ pub fn delete_post_process_prompt(app: AppHandle, id: String) -> Result<(), Stri
     }
 
     settings::write_settings(&app, settings);
+    crate::atype::shared::push(&app); // Atype: share with the iPhone
     Ok(())
 }
 
@@ -1299,6 +1302,7 @@ pub fn set_post_process_selected_prompt(app: AppHandle, id: String) -> Result<()
 
     settings.post_process_selected_prompt_id = Some(id);
     settings::write_settings(&app, settings);
+    crate::atype::shared::push(&app); // Atype: share with the iPhone
     Ok(())
 }
 

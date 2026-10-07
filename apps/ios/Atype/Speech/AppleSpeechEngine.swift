@@ -104,11 +104,8 @@ final class AppleSpeechEngine {
             } catch {}
         }
 
-        let converter = self.converter
-        input.installTap(onBus: 0, bufferSize: 4096, format: micFormat) { buffer, _ in
-            guard let converted = Self.convert(buffer, with: converter, to: target) else { return }
-            continuation.yield(AnalyzerInput(buffer: converted))
-        }
+        input.installTap(onBus: 0, bufferSize: 4096, format: micFormat,
+                         block: Self.makeTap(converter: converter, target: target, continuation: continuation))
         audioEngine.prepare()
         try audioEngine.start()
     }
@@ -137,6 +134,20 @@ final class AppleSpeechEngine {
         resultsTask?.cancel()
         resultsTask = nil
         analyzer = nil
+    }
+
+    /// The tap runs on a realtime audio thread, so it must not inherit the
+    /// main-actor isolation of this class (Swift 6 traps when it does).
+    nonisolated private static func makeTap(
+        converter: AVAudioConverter?,
+        target: AVAudioFormat,
+        continuation: AsyncStream<AnalyzerInput>.Continuation
+    ) -> AVAudioNodeTapBlock {
+        nonisolated(unsafe) let converter = converter
+        return { @Sendable buffer, _ in
+            guard let converted = convert(buffer, with: converter, to: target) else { return }
+            continuation.yield(AnalyzerInput(buffer: converted))
+        }
     }
 
     nonisolated private static func convert(_ buffer: AVAudioPCMBuffer, with converter: AVAudioConverter?, to format: AVAudioFormat) -> AVAudioPCMBuffer? {

@@ -28,14 +28,16 @@ final class AppModel {
     var config = SharedConfig()
     let history = HistoryStore()
     var historyVersion = 0  // bump to refresh views that read `history`
-    var folderName = "本機（這支 iPhone）"
+    var folderName = "尚未授權（暫存在這支 iPhone）"
+    var folderPicked: Bool { SharedFolder.picked() != nil }
 
     // Settings (UserDefaults; the API key is in the Keychain)
     var polishDictation: Bool { didSet { defaults.set(polishDictation, forKey: "polishDictation") } }
     var autoCopy: Bool { didSet { defaults.set(autoCopy, forKey: "autoCopy") } }
     var model: String { didSet { defaults.set(model, forKey: "model") } }
+    var baseURL: String { didSet { defaults.set(baseURL, forKey: "baseURL") } }
     var commandTimeout: Double { didSet { defaults.set(commandTimeout, forKey: "commandTimeout") } }
-    var apiKey: String { didSet { Keychain.set(apiKey, for: "gemini") } }
+    var apiKey: String { didSet { Keychain.set(apiKey, for: "llm") } }
 
     private let defaults = UserDefaults.standard
     private let engine = AppleSpeechEngine()
@@ -44,8 +46,9 @@ final class AppModel {
         polishDictation = defaults.object(forKey: "polishDictation") as? Bool ?? false
         autoCopy = defaults.object(forKey: "autoCopy") as? Bool ?? true
         model = defaults.string(forKey: "model") ?? LLMSettings.defaultModel
+        baseURL = defaults.string(forKey: "baseURL") ?? LLMSettings.geminiBaseURL.absoluteString
         commandTimeout = defaults.object(forKey: "commandTimeout") as? Double ?? 12
-        apiKey = Keychain.get("gemini") ?? ""
+        apiKey = Keychain.get("llm") ?? ""
         reloadConfig()
         engine.onPartial = { [weak self] final, volatile in
             self?.liveFinal = final
@@ -57,7 +60,7 @@ final class AppModel {
 
     func reloadConfig() {
         let folder = SharedFolder.current
-        folderName = SharedFolder.picked() == nil ? "本機（這支 iPhone）" : folder.lastPathComponent
+        folderName = SharedFolder.picked() == nil ? "尚未授權（暫存在這支 iPhone）" : SharedFolder.displayPath(folder)
         config = SharedConfig.load(from: folder)
     }
 
@@ -139,7 +142,7 @@ final class AppModel {
             phase = .idle
             return
         }
-        var pipeline = Pipeline(config: config, llm: hasKey ? LLMClient(settings: LLMSettings(model: model, apiKey: apiKey)) : nil)
+        var pipeline = Pipeline(config: config, llm: hasKey ? LLMClient(settings: LLMSettings(baseURL: URL(string: baseURL.trimmingCharacters(in: .whitespaces)) ?? LLMSettings.geminiBaseURL, model: model, apiKey: apiKey)) : nil)
         pipeline.commandTimeout = .seconds(commandTimeout)
         let mode: DictationMode = commandMode ? .command : .dictation(polish: polishDictation)
         let result = await pipeline.run(raw, mode: mode)
@@ -149,7 +152,7 @@ final class AppModel {
             polished: result.polished != nil,
             command: commandMode,
             promptName: result.promptID.flatMap { config.prompt(id: $0)?.name },
-            error: commandMode && !hasKey ? "沒有 Gemini API key，只做了本機處理" : result.llmError.map(Self.describe)
+            error: commandMode && !hasKey ? "沒有設定 API key，只做了本機處理" : result.llmError.map(Self.describe)
         )
         history.add(entry, brainFolder: SharedFolder.picked())
         historyVersion += 1
@@ -173,7 +176,7 @@ final class AppModel {
 
     static func describe(_ error: String) -> String {
         if error == "timeout" { return "AI 超過時間沒回應，貼的是本機處理的版本" }
-        if error.contains("noKey") { return "沒有 Gemini API key" }
+        if error.contains("noKey") { return "沒有設定 API key" }
         return "AI 失敗，貼的是本機處理的版本"
     }
 }

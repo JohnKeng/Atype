@@ -6,6 +6,18 @@ struct SettingsView: View {
     @State private var picking = false
     @State private var showKey = false
 
+    /// Picking a provider fills in its URL and a sensible model.
+    private var providerBinding: Binding<String> {
+        Binding(
+            get: { Provider.all.first { $0.url == model.baseURL }?.id ?? "custom" },
+            set: { id in
+                guard let p = Provider.all.first(where: { $0.id == id }), !p.url.isEmpty else { return }
+                model.baseURL = p.url
+                model.model = p.model
+            }
+        )
+    }
+
     var body: some View {
         @Bindable var model = model
         NavigationStack {
@@ -23,26 +35,31 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Picker("服務", selection: providerBinding) {
+                        ForEach(Provider.all) { Text($0.name).tag($0.id) }
+                    }
+                    TextField("API 網址", text: $model.baseURL).autocorrectionDisabled().textInputAutocapitalization(.never).keyboardType(.URL)
                     HStack {
                         Group {
-                            if showKey { TextField("Gemini API key", text: $model.apiKey) } else { SecureField("Gemini API key", text: $model.apiKey) }
+                            if showKey { TextField("API key", text: $model.apiKey) } else { SecureField("API key", text: $model.apiKey) }
                         }
                         .autocorrectionDisabled().textInputAutocapitalization(.never)
                         Button { showKey.toggle() } label: { Image(systemName: showKey ? "eye.slash" : "eye") }.buttonStyle(.borderless)
                     }
                     TextField("模型", text: $model.model).autocorrectionDisabled().textInputAutocapitalization(.never)
                     if !LLMClient.isChatModel(model.model) {
-                        Text("這個模型不能用來整理文字（live、TTS、圖片…），請改用 \(LLMSettings.defaultModel)").font(.caption).foregroundStyle(.orange)
+                        Text("這個模型不能用來整理文字（live、TTS、圖片…），請換一般的對話模型").font(.caption).foregroundStyle(.orange)
                     }
-                    Link("到 Google AI Studio 建立 key", destination: URL(string: "https://aistudio.google.com/apikey")!)
-                } header: { Text("Gemini") } footer: { Text("key 只存在這支 iPhone 的鑰匙圈，不會同步到 iCloud。") }
+                } header: { Text("AI 模型") } footer: {
+                    Text("支援 OpenAI 相容格式（/chat/completions）的 API key：Gemini、OpenAI、OpenRouter、Groq，或自架的相容代理。key 只存在這支 iPhone 的鑰匙圈，不會同步到 iCloud。")
+                }
 
                 Section {
-                    LabeledContent("資料夾", value: model.folderName)
-                    Button("選擇資料夾（例如 iCloud 雲碟的 service-db/Atype）") { picking = true }
-                    if model.folderName != "本機（這支 iPhone）" { Button("改回本機", role: .destructive) { model.resetFolder() } }
-                } header: { Text("和 Mac 共用") } footer: {
-                    Text("選和 Mac 相同的資料夾，提示詞與詞典就會兩邊共用；iPhone 的紀錄寫在 atype.iphone.jsonl 與每日的 .iphone.md。")
+                    LabeledContent("目前", value: model.folderName)
+                    Button(model.folderPicked ? "改用其他資料夾" : "授權預設資料夾（\(SharedFolder.defaultDisplay)）") { picking = true }
+                    if model.folderPicked { Button("取消授權", role: .destructive) { model.resetFolder() } }
+                } header: { Text("和 Mac 共用的資料夾") } footer: {
+                    Text("預設是 \(SharedFolder.defaultDisplay)，和 Mac 版相同。iOS 規定要你親手授權一次：選擇器會直接停在這個資料夾，按「打開」即可。提示詞與詞典兩邊共用；iPhone 的紀錄寫在 atype.iphone.jsonl 與每日的 .iphone.md。")
                 }
 
                 Section {
@@ -50,9 +67,25 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("設定")
-            .fileImporter(isPresented: $picking, allowedContentTypes: [.folder]) { result in
-                if case .success(let url) = result { model.pickFolder(url) }
+            .sheet(isPresented: $picking) {
+                FolderPicker(initial: SharedFolder.picked() ?? SharedFolder.defaultICloudURL) { model.pickFolder($0) }
+                    .ignoresSafeArea()
             }
         }
     }
+}
+
+struct Provider: Identifiable {
+    let id: String
+    let name: String
+    let url: String
+    let model: String
+
+    static let all = [
+        Provider(id: "gemini", name: "Gemini", url: LLMSettings.geminiBaseURL.absoluteString, model: LLMSettings.defaultModel),
+        Provider(id: "openai", name: "OpenAI", url: "https://api.openai.com/v1", model: "gpt-5-mini"),
+        Provider(id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/api/v1", model: "google/gemini-3.1-flash-lite"),
+        Provider(id: "groq", name: "Groq", url: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile"),
+        Provider(id: "custom", name: "自訂", url: "", model: ""),
+    ]
 }

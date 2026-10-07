@@ -36,7 +36,8 @@ pub fn init(app: &AppHandle) {
         let Some(dir) = super::config::brain_dir(&handle, &cfg) else {
             return;
         };
-        match append(&dir, &entry, kind) {
+        let text = pasted_text(&entry, &cfg);
+        match append(&dir, &entry, kind, &text) {
             Ok(()) => debug!(
                 "Atype brain: {} entry {} → {}",
                 kind,
@@ -58,21 +59,32 @@ fn local_time(ts: i64) -> DateTime<Local> {
 }
 
 /// The text that was actually pasted: the LLM result when there is one.
-fn final_text(entry: &HistoryEntry) -> &str {
-    entry
+/// What was actually pasted: the LLM result when there is one, otherwise the
+/// raw transcription after the same local steps the paste got (dictionary,
+/// then the Chinese layer when it is on).
+pub fn pasted_text(entry: &HistoryEntry, cfg: &super::config::AtypeConfig) -> String {
+    if let Some(t) = entry
         .post_processed_text
         .as_deref()
         .filter(|t| !t.trim().is_empty())
-        .unwrap_or(&entry.transcription_text)
+    {
+        return t.to_string();
+    }
+    let t = super::dictionary::apply(&entry.transcription_text, &cfg.dictionary);
+    if cfg.zh_post_enabled {
+        super::zh_post::polish(&t)
+    } else {
+        t
+    }
 }
 
-pub fn jsonl_line(entry: &HistoryEntry, kind: &str) -> String {
+pub fn jsonl_line(entry: &HistoryEntry, kind: &str, text: &str) -> String {
     let when = local_time(entry.timestamp);
     serde_json::json!({
         "ts": when.to_rfc3339(),
         "event": kind,
         "id": entry.id,
-        "text": final_text(entry),
+        "text": text,
         "raw": entry.transcription_text,
         "polished": entry.post_processed_text.is_some(),
         "audio": entry.file_name,
@@ -80,9 +92,8 @@ pub fn jsonl_line(entry: &HistoryEntry, kind: &str) -> String {
     .to_string()
 }
 
-pub fn markdown_block(entry: &HistoryEntry) -> String {
+pub fn markdown_block(entry: &HistoryEntry, text: &str) -> String {
     let when = local_time(entry.timestamp);
-    let text = final_text(entry);
     let mut block = format!("- **{}** {}\n", when.format("%H:%M"), text.trim());
     if entry.post_processed_text.is_some() && entry.transcription_text.trim() != text.trim() {
         block.push_str(&format!("  - 原文：{}\n", entry.transcription_text.trim()));
@@ -91,13 +102,13 @@ pub fn markdown_block(entry: &HistoryEntry) -> String {
 }
 
 /// Append one event to the JSONL file and (for new entries) to the daily log.
-pub fn append(dir: &Path, entry: &HistoryEntry, kind: &str) -> std::io::Result<()> {
+pub fn append(dir: &Path, entry: &HistoryEntry, kind: &str, text: &str) -> std::io::Result<()> {
     create_dir_all(dir)?;
     let mut jsonl = OpenOptions::new()
         .create(true)
         .append(true)
         .open(dir.join("atype.jsonl"))?;
-    writeln!(jsonl, "{}", jsonl_line(entry, kind))?;
+    writeln!(jsonl, "{}", jsonl_line(entry, kind, text))?;
 
     if kind == "added" {
         let when = local_time(entry.timestamp);
@@ -112,7 +123,7 @@ pub fn append(dir: &Path, entry: &HistoryEntry, kind: &str) -> std::io::Result<(
         if is_new {
             writeln!(md, "# {}\n", when.format("%Y-%m-%d"))?;
         }
-        write!(md, "{}", markdown_block(entry))?;
+        write!(md, "{}", markdown_block(entry, text))?;
     }
     Ok(())
 }
@@ -137,7 +148,8 @@ mod tests {
 
     #[test]
     fn jsonl_prefers_polished_text_and_keeps_raw() {
-        let line = jsonl_line(&entry("呃我想說", Some("我想說")), "added");
+        let e = entry("呃我想說", Some("我想說"));
+        let line = jsonl_line(&e, "added", &pasted_text(&e, &Default::default()));
         let v: serde_json::Value = serde_json::from_str(&line).unwrap();
         assert_eq!(v["text"], "我想說");
         assert_eq!(v["raw"], "呃我想說");
@@ -147,16 +159,30 @@ mod tests {
 
     #[test]
     fn markdown_shows_raw_only_when_it_differs() {
-        assert!(markdown_block(&entry("一樣", Some("一樣"))).lines().count() == 1);
-        assert!(markdown_block(&entry("呃一樣", Some("一樣"))).contains("原文：呃一樣"));
+        assert!(
+            markdown_block(&entry("一樣", Some("一樣")), "一樣")
+                .lines()
+                .count()
+                == 1
+        );
+        assert!(markdown_block(&entry("呃一樣", Some("一樣")), "一樣").contains("原文：呃一樣"));
+    }
+
+    #[test]
+    fn without_llm_the_brain_gets_the_pasted_text_not_the_raw() {
+        let cfg = super::super::config::AtypeConfig::default();
+        assert_eq!(
+            pasted_text(&entry("AI沒有生效嗎?", None), &cfg),
+            "AI 沒有生效嗎？"
+        );
     }
 
     #[test]
     fn append_writes_jsonl_and_daily_markdown() {
         let dir = tempfile::tempdir().unwrap();
         let e = entry("第一句", None);
-        append(dir.path(), &e, "added").unwrap();
-        append(dir.path(), &e, "updated").unwrap();
+        append(dir.path(), &e, "added", "第一句").unwrap();
+        append(dir.path(), &e, "updated", "第一句").unwrap();
         let jsonl = std::fs::read_to_string(dir.path().join("atype.jsonl")).unwrap();
         assert_eq!(jsonl.lines().count(), 2);
         let when = local_time(e.timestamp);

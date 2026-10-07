@@ -72,6 +72,7 @@ fn sanitize(mut incoming: AtypeConfig, stored: &AtypeConfig) -> AtypeConfig {
         .map(|d| d.trim().to_string())
         .filter(|d| !d.is_empty());
     incoming.defaults_version = stored.defaults_version;
+    incoming.shared_synced_at = stored.shared_synced_at.clone();
     incoming.dictionary = super::dictionary::sanitize(incoming.dictionary);
     incoming.command_timeout_ms = incoming
         .command_timeout_ms
@@ -82,6 +83,7 @@ fn sanitize(mut incoming: AtypeConfig, stored: &AtypeConfig) -> AtypeConfig {
 #[tauri::command]
 #[specta::specta]
 pub fn get_atype_config(app: AppHandle) -> Result<AtypeConfigView, String> {
+    super::shared::sync(&app);
     Ok(view(&app, config::load(&app)))
 }
 
@@ -90,8 +92,16 @@ pub fn get_atype_config(app: AppHandle) -> Result<AtypeConfigView, String> {
 pub fn set_atype_config(app: AppHandle, config: AtypeConfig) -> Result<AtypeConfigView, String> {
     let stored = config::load(&app);
     let cfg = sanitize(config, &stored);
+    let dictionary_changed = cfg.dictionary != stored.dictionary;
+    let brain_moved = cfg.brain_dir != stored.brain_dir;
     config::save(&app, &cfg);
-    Ok(view(&app, cfg))
+    if brain_moved {
+        // A different folder may already hold a newer shared file.
+        super::shared::sync(&app);
+    } else if dictionary_changed {
+        super::shared::push(&app);
+    }
+    Ok(view(&app, config::load(&app)))
 }
 
 /// Open the second-brain folder in Finder, creating it first if needed.

@@ -9,6 +9,18 @@ import Foundation
 enum SharedFolder {
     private static let bookmarkKey = "sharedFolderBookmark"
 
+    /// Default: the same folder the Mac uses. iOS still needs the user to
+    /// grant it once, so the picker opens right there.
+    static let defaultICloudURL = URL(fileURLWithPath: "/private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/service-db/Atype", isDirectory: true)
+    static let defaultDisplay = "iCloud 雲碟/service-db/Atype"
+
+    /// "iCloud 雲碟/…" for iCloud Drive paths, otherwise the folder name.
+    static func displayPath(_ url: URL) -> String {
+        let p = url.path
+        if let r = p.range(of: "com~apple~CloudDocs/") { return "iCloud 雲碟/" + p[r.upperBound...] }
+        return url.lastPathComponent
+    }
+
     static var localFallback: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }

@@ -356,6 +356,8 @@ pub(crate) async fn process_transcription_output(
     post_process: bool,
     command: bool,
 ) -> ProcessedTranscription {
+    // Atype: pick up prompt/dictionary edits made on the iPhone.
+    crate::atype::shared::sync(app);
     let mut settings = get_settings(app);
     let mut post_processed_text: Option<String> = None;
     let mut post_process_prompt: Option<String> = None;

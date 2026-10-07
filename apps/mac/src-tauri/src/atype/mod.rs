@@ -15,6 +15,7 @@ pub mod config;
 pub mod defaults;
 pub mod dictionary;
 pub mod prompts;
+pub mod shared;
 pub mod zh_post;
 
 use crate::managers::model::ModelInfo;
@@ -144,6 +145,7 @@ pub fn add_known_terms(
 pub fn init(app: &AppHandle) {
     let _ = APP.set(app.clone());
     defaults::apply_once(app);
+    shared::sync(app);
     brain::init(app);
 }
 
