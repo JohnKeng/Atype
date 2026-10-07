@@ -254,4 +254,26 @@ mod tests {
         assert!(stored[0].prompt.contains("路易莎"));
         assert!(stored[1].prompt.ends_with("my edit"));
     }
+
+    /// The iPhone app ships the same presets as JSON
+    /// (apps/ios/AtypeCore/Sources/AtypeCore/Resources/presets.json).
+    /// Regenerate it with `ATYPE_WRITE_PRESETS=1 cargo test presets_json`.
+    #[test]
+    fn presets_json_matches_ios() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../ios/AtypeCore/Sources/AtypeCore/Resources/presets.json");
+        let want: Vec<_> = presets()
+            .into_iter()
+            .map(|p| serde_json::json!({"id": p.id, "name": p.name, "prompt": p.prompt}))
+            .collect();
+        let want = serde_json::to_string_pretty(&want).unwrap() + "\n";
+        if std::env::var("ATYPE_WRITE_PRESETS").is_ok() {
+            std::fs::write(&path, &want).unwrap();
+        }
+        let got = std::fs::read_to_string(&path).unwrap_or_default();
+        assert!(
+            got == want,
+            "presets.json is out of date; run ATYPE_WRITE_PRESETS=1 cargo test presets_json"
+        );
+    }
 }

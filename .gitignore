@@ -19,3 +19,7 @@ local.properties
 *.p12
 *.p8
 *.key
+# iOS
+apps/ios/Atype.xcodeproj/
+apps/ios/AtypeCore/.build/
+apps/ios/AtypeCore/.swiftpm/

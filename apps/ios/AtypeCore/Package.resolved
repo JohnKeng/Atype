@@ -1,0 +1,14 @@
+{
+  "originHash" : "35b74565237649fa79bd2f1d05e0b5ad32a7062ff17c568bfdb0c830f5411850",
+  "pins" : [
+    {
+      "identity" : "swiftyopencc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ddddxxx/SwiftyOpenCC.git",
+      "state" : {
+        "revision" : "1d8105a0f7199c90af722bff62728050c858e777"
+      }
+    }
+  ],
+  "version" : 3
+}
