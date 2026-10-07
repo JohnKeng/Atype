@@ -9,7 +9,7 @@
 
 ## Mac 版規則
 
-- Atype 自己的程式全部放 `apps/mac/src-tauri/src/atype/`（`zh_post.rs` 中文層、`config.rs` 讀寫 `atype.json`、`brain.rs` 第二大腦、`defaults.rs` 一次性預設、`commands.rs` 個人化頁的指令、`mod.rs` 模型清單）。對 Handy 原有檔案只加最少的掛鉤。
+- Atype 自己的程式全部放 `apps/mac/src-tauri/src/atype/`（`zh_post.rs` 中文層、`dictionary.rs` 詞典、`prompts.rs` 內建提示詞、`config.rs` 讀寫 `atype.json`、`brain.rs` 第二大腦、`defaults.rs` 一次性預設、`commands.rs` 個人化頁的指令、`mod.rs` 模型清單與 LLM 模型過濾）。對 Handy 原有檔案只加最少的掛鉤。
 - 新設定放 `atype.json`（`AtypeConfig`），不要往 Handy 的 `AppSettings` 加欄位。要改既有使用者的 Handy 設定，用 `atype/defaults.rs` 加一個新版本，不要只改 `default_*` 函式。
 - 前端新畫面放 `src/components/settings/atype/`；介面文字一律走 i18n，`en` 與 `zh-TW` 兩份都要加。
 - 顏色只改 `src/styles/theme.css` 的 token（目前是鸚鵡綠，取自 App 圖示）。
@@ -23,7 +23,7 @@ bun install
 bun run tauri dev                 # 開發；權限算在終端機身上
 bun run app:install               # 編 release 版並裝到 /Applications/Atype.app
 bun run build                     # 前端型別檢查與建置
-cd src-tauri && cargo test        # 300 個測試
+cd src-tauri && cargo test        # 314 個測試
 cargo run -- --polish "我们明天下午3:30开会"   # 直接看中文層輸出
 bun run icon:gen / icon:set       # 生圖示（CLIProxyAPI 的 gpt-image）/ 換圖示
 ```
@@ -34,6 +34,8 @@ bun run icon:gen / icon:set       # 生圖示（CLIProxyAPI 的 gpt-image）/ �
 
 - ad-hoc 簽章：每次重新安裝後，「輔助使用」清單裡的 Atype 要關掉再打開一次。
 - LLM 預設 Gemini（`gemini-3.1-flash-lite`），2.5 秒時間預算，逾時貼本機處理過的原文。
-- 第二大腦預設寫到 iCloud 雲碟 `Atype/brain/`（`atype.jsonl` 與每日 Markdown），iPhone 版也要寫到同一處。
+- 第二大腦預設寫到 iCloud 雲碟 `service-db/Atype/`（`atype.jsonl` 與每日 Markdown），iPhone 版也要寫到同一處。
 - 唯一的分支 `claude/typeless-cross-platform-5afuaf` 就是 GitHub 的預設分支。
 - 早期研究與商用版方案在 `docs/archive/`，只供查來源，不再維護。
+- 舊路徑留下的建置快取會讓 build script 找不到 `.toml`（專案曾在 Desktop）：刪掉 `target/debug/build/` 裡 output 含舊路徑的資料夾再編。
+- 主熱鍵與指令熱鍵用不同提示詞：`process_transcription_output` 的 `command` 參數，`atype::prompt_for_call` 換 prompt 與時間預算。

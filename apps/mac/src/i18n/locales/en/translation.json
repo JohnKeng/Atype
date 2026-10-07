@@ -220,6 +220,18 @@
         "chars": "characters",
         "entries": "entries"
       },
+      "dictionary": {
+        "title": "Dictionary",
+        "description": "Fix names, products and terms that keep being misheard. Runs on this Mac, works with AI off, and the terms are also given to the AI when it is on",
+        "term": "Correct spelling",
+        "aliases": "Common mishearings (comma separated)",
+        "termPlaceholder": "Correct spelling, e.g. iCloud",
+        "aliasesPlaceholder": "Mishearings, e.g. iclo, icrow (optional for Chinese)",
+        "soundOnly": "Empty: Chinese terms also match same-sounding characters",
+        "add": "Add",
+        "remove": "Remove",
+        "empty": "No entries yet. For a Chinese term the correct spelling is enough: same-sounding mistakes are fixed automatically. For English terms, list the misheard spellings."
+      },
       "brain": {
         "title": "Second Brain",
         "enabled": {
@@ -228,7 +240,7 @@
         },
         "folder": {
           "title": "Folder",
-          "description": "Defaults to Atype/brain in iCloud Drive, or the app data folder without iCloud",
+          "description": "Defaults to service-db/Atype in iCloud Drive, or the app data folder without iCloud",
           "default": "Default location"
         },
         "choose": "Choose Folder",
@@ -247,6 +259,14 @@
           "description": "If the AI takes longer than this, the formatted raw text is pasted instead",
           "value": "{{seconds}} s"
         },
+        "commandPrompt": {
+          "title": "Command hotkey prompt",
+          "description": "Used when you dictate with the post-process hotkey (right Option + right Command by default), e.g. turn an outline into a formal email. The main hotkey still only cleans up"
+        },
+        "commandTimeout": {
+          "label": "Command hotkey time budget",
+          "description": "Emails and meeting notes take longer; past this the formatted original is pasted"
+        },
         "zhPost": {
           "label": "Chinese Formatting (Traditional, full-width punctuation, spacing)",
           "description": "Convert to Taiwan Traditional Chinese, use full-width punctuation and add spaces between Chinese and Latin text"
@@ -256,7 +276,7 @@
         "title": "Try It",
         "input": "Text",
         "placeholder": "Paste some Chinese text",
-        "button": "Apply Chinese Formatting",
+        "button": "Apply dictionary and Chinese formatting",
         "result": "Result"
       },
       "errors": {
@@ -771,7 +791,8 @@
   },
   "overlay": {
     "transcribing": "Transcribing...",
-    "processing": "Processing..."
+    "processing": "AI polishing…",
+    "composing": "AI composing…"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} may be blocking 1 shortcut",

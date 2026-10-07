@@ -18,10 +18,14 @@ type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
 // every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
 const WAVE_BARS = 9;
 
+const AI_SPARK = "\u2726"; // ✦, marks the AI cleanup step
+
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
+  // Atype: true while a command-hotkey (LLM) session is on screen.
+  const [commandMode, setCommandMode] = useState(false);
   // `Stream::play()` returning does not mean hardware callbacks are flowing.
   // Stay visually in an arming state until the backend processes the first
   // actual microphone sample chunk.
@@ -89,6 +93,11 @@ const RecordingOverlay: React.FC = () => {
         setIsVisible(true);
       });
 
+      const unlistenMode = await listen<boolean>(
+        "atype-command-mode",
+        (event) => setCommandMode(event.payload === true),
+      );
+
       const unlistenHide = await listen("hide-overlay", () => {
         setIsVisible(false);
         setCaptureReady(false);
@@ -123,6 +132,7 @@ const RecordingOverlay: React.FC = () => {
 
       return () => {
         unlistenShow();
+        unlistenMode();
         unlistenHide();
         unlistenReady();
         unlistenLevel();
@@ -205,7 +215,16 @@ const RecordingOverlay: React.FC = () => {
   const listeningRow = (showTimer: boolean, showCancel: boolean) => (
     <div className="sbase">
       <div className="sbase-l">
-        <span className={`sdot ${captureReady ? "ready" : "arming"}`} />
+        {commandMode ? (
+          <span
+            className={`sspark ${captureReady ? "" : "arming"}`}
+            aria-hidden="true"
+          >
+            {AI_SPARK}
+          </span>
+        ) : (
+          <span className={`sdot ${captureReady ? "ready" : "arming"}`} />
+        )}
       </div>
       {waveform}
       <div className="sbase-r">
@@ -217,12 +236,20 @@ const RecordingOverlay: React.FC = () => {
 
   // spinner (left) | label (center) | cancel (right) — same 3-zone grid as the
   // listening row, so the label is centered.
-  const workingRow = (label: string, showCancel: boolean) => (
+  // Atype: the AI cleanup step gets its own look (sparkle + accent label + a
+  // glowing ring on the card) so it is clear the LLM is rewriting the text.
+  const workingRow = (label: string, showCancel: boolean, ai = false) => (
     <div className="sbase">
       <div className="sbase-l">
-        <span className="sspinner" />
+        {ai ? (
+          <span className="sspark" aria-hidden="true">
+            {AI_SPARK}
+          </span>
+        ) : (
+          <span className="sspinner" />
+        )}
       </div>
-      <span className="swork-label">{label}</span>
+      <span className={`swork-label ${ai ? "ai" : ""}`}>{label}</span>
       <div className="sbase-r">{showCancel && cancelBtn}</div>
     </div>
   );
@@ -244,8 +271,8 @@ const RecordingOverlay: React.FC = () => {
         <div
           key={session}
           className={`scard ${open ? "open" : ""} ${collapsed ? "working" : ""} ${
-            isVisible ? "" : "leaving"
-          }`}
+            commandMode || (working && workKind === "polishing") ? "ai" : ""
+          } ${isVisible ? "" : "leaving"}`}
         >
           <div className="stext">
             <div className="stext-clip">
@@ -269,9 +296,10 @@ const RecordingOverlay: React.FC = () => {
           {working
             ? workingRow(
                 workKind === "polishing"
-                  ? t("overlay.processing")
+                  ? t(commandMode ? "overlay.composing" : "overlay.processing")
                   : t("overlay.transcribing"),
                 true,
+                workKind === "polishing",
               )
             : listeningRow(open, true)}
         </div>
@@ -285,7 +313,7 @@ const RecordingOverlay: React.FC = () => {
   const working = state === "transcribing" || state === "processing";
   const workLabel =
     state === "processing"
-      ? t("overlay.processing")
+      ? t(commandMode ? "overlay.composing" : "overlay.processing")
       : t("overlay.transcribing");
 
   return (
@@ -294,9 +322,13 @@ const RecordingOverlay: React.FC = () => {
       className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
     >
       <div
-        className={`scard compact ${working && isVisible ? "cworking" : ""}`}
+        className={`scard compact ${working && isVisible ? "cworking" : ""} ${
+          commandMode || state === "processing" ? "ai" : ""
+        }`}
       >
-        {working ? workingRow(workLabel, true) : listeningRow(false, true)}
+        {working
+          ? workingRow(workLabel, true, state === "processing")
+          : listeningRow(false, true)}
       </div>
     </div>
   );

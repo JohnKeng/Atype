@@ -8,7 +8,10 @@
 
 ## 在 Mac 上安裝
 
-需要 Xcode Command Line Tools、Rust、bun、cmake。第一次編譯約 5 到 10 分鐘。
+只支援 Apple 晶片（M1 以後）的 Mac。LLM 整理請自備 Gemini API key。
+
+- **下載編好的 App**：到 [Releases](https://github.com/JohnKeng/Atype/releases/latest) 下載 zip，把 `Atype.app` 拖進「應用程式」。App 沒有經過 Apple 公證，第一次打開會被擋，要到「系統設定 → 隱私權與安全性」按「仍要打開」。
+- **自己編**：需要 Xcode Command Line Tools、Rust、bun、cmake，第一次約 5 到 10 分鐘。
 
 ```bash
 git clone https://github.com/JohnKeng/Atype.git
@@ -17,7 +20,7 @@ bun install
 bun run app:install      # 編譯並安裝到「應用程式」
 ```
 
-開發時用 `bun run tauri dev`。第一次設定（下載模型、填 Gemini key、給權限）與每天的用法在 [`apps/mac/README.md`](apps/mac/README.md)。
+兩種方式的詳細步驟、被擋時怎麼打開、第一次設定（下載模型、填 Gemini key、給權限）與每天的用法，都在 [`apps/mac/README.md`](apps/mac/README.md)。
 
 ## 怎麼運作
 
@@ -30,7 +33,7 @@ flowchart LR
   L -->|逾時或失敗| Z
   Z --> P[貼到目前的 App]
   Z --> H[(歷史紀錄)]
-  H --> B[[第二大腦<br/>iCloud Drive/Atype/brain]]
+  H --> B[[第二大腦<br/>iCloud Drive/service-db/Atype]]
 ```
 
 - **聲音不離開這台 Mac**。只有辨識出來的文字會送到 LLM 整理，而且可以關掉。

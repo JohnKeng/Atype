@@ -354,17 +354,22 @@ pub(crate) async fn process_transcription_output(
     app: &AppHandle,
     transcription: &str,
     post_process: bool,
+    command: bool,
 ) -> ProcessedTranscription {
-    let settings = get_settings(app);
-    let mut final_text = transcription.to_string();
+    let mut settings = get_settings(app);
     let mut post_processed_text: Option<String> = None;
     let mut post_process_prompt: Option<String> = None;
 
-    // Atype: the LLM gets a bounded time budget; past it, the deterministic
-    // layer below runs on the raw transcription and that is what gets pasted.
+    // Atype: the personal dictionary fixes misheard terms locally first, and
+    // its terms go to the LLM as <known_terms>. The LLM gets a bounded time
+    // budget; past it, the deterministic layer below runs on the
+    // dictionary-corrected transcription and that is what gets pasted.
     let atype_cfg = crate::atype::config::load(app);
+    let mut final_text = crate::atype::dictionary::apply(transcription, &atype_cfg.dictionary);
+    let llm_timeout_ms = crate::atype::prompt_for_call(&mut settings, &atype_cfg, command);
+    crate::atype::add_known_terms(&mut settings, &atype_cfg.dictionary);
     if post_process {
-        let budget = std::time::Duration::from_millis(atype_cfg.llm_timeout_ms.max(1));
+        let budget = std::time::Duration::from_millis(llm_timeout_ms.max(1));
         let outcome =
             match tokio::time::timeout(budget, post_process_transcription(&settings, &final_text))
                 .await
@@ -373,7 +378,7 @@ pub(crate) async fn process_transcription_output(
                 Err(_) => {
                     warn!(
                     "Atype: LLM post-processing exceeded {} ms; pasting the deterministic result",
-                    atype_cfg.llm_timeout_ms
+                    llm_timeout_ms
                 );
                     None
                 }
@@ -478,6 +483,9 @@ impl ShortcutAction for TranscribeAction {
         // doesn't stream (or whose capability is not known yet) gets the compact
         // pill instead of an oversized transparent live window.
         let overlay_started = Instant::now();
+        // Atype: tell the overlay whether this is the command (LLM) hotkey so
+        // it can mark the session before the card shows.
+        let _ = app.emit("atype-command-mode", self.post_process);
         match settings.overlay_style {
             OverlayStyle::Live if model_supports_streaming => utils::show_streaming_overlay(app),
             OverlayStyle::Live | OverlayStyle::Minimal => show_recording_overlay(app),
@@ -627,6 +635,8 @@ impl ShortcutAction for TranscribeAction {
                                                  // Atype: the main hotkey also polishes with the LLM when post-processing
                                                  // is on (atype.json `llm_on_main_hotkey`), like Typeless.
         let post_process = self.post_process || crate::atype::main_hotkey_polishes(app);
+        // Atype: the post-process hotkey is the command hotkey (its own prompt).
+        let command = self.post_process;
         let cancel_generation = rm.cancel_generation();
 
         tauri::async_runtime::spawn(async move {
@@ -733,7 +743,12 @@ impl ShortcutAction for TranscribeAction {
                                 }
                             }
                             let Some(processed) = complete_unless_cancelled(
-                                process_transcription_output(&ah, &transcription, post_process),
+                                process_transcription_output(
+                                    &ah,
+                                    &transcription,
+                                    post_process,
+                                    command,
+                                ),
                                 || rm.was_cancelled_since(cancel_generation),
                             )
                             .await

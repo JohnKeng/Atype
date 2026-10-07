@@ -4,24 +4,45 @@
 
 ## 安裝與更新
 
-需要 Xcode Command Line Tools、Rust（`rustup`）、[bun](https://bun.sh)、cmake（`brew install cmake`）。完整的 Xcode 不需要。
+有兩種方式，裝好的 App 一樣。只支援 Apple 晶片（M1 以後）的 Mac。
+
+### 方式一：下載編好的 App（不用裝開發工具）
+
+1. 到 [Releases](https://github.com/JohnKeng/Atype/releases/latest) 下載 `Atype-<版本>-macos-arm64.zip`，解壓縮，把 `Atype.app` 拖進「應用程式」。
+2. **第一次打開會被擋**：這個 App 沒有經過 Apple 公證，macOS 會說「無法驗證開發者」或「Apple 無法檢查是否包含惡意軟體」。這時：
+   - 按「完成」關掉提示，到「系統設定 → 隱私權與安全性」，往下捲到「已阻擋 Atype」，按 **「仍要打開」**，輸入密碼後再按一次「打開」。只要做一次。
+   - 如果看到的是「**已損毀，應丟到垃圾桶**」，在終端機執行下面這行再打開：
+
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/Atype.app
+     ```
+3. 更新：下載新版本，覆蓋 `/Applications/Atype.app`，再照下面「輔助使用權限」重給一次。
+
+### 方式二：自己從原始碼編
+
+需要 Xcode Command Line Tools、Rust（`rustup`）、[bun](https://bun.sh)、cmake（`brew install cmake`）。完整的 Xcode 不需要。第一次約 5 到 10 分鐘。自己編的 App 不會被擋。
 
 ```bash
-cd apps/mac
+git clone https://github.com/JohnKeng/Atype.git
+cd Atype/apps/mac
 bun install
 bun run app:install    # 編譯 release 版，裝到 /Applications/Atype.app 並啟動
 ```
 
 更新：`git pull` 後再跑一次 `bun run app:install`。
 
-**輔助使用權限**：安裝後到「系統設定 → 隱私權與安全性 → 輔助使用」打開 Atype。目前用 ad-hoc 簽章，**每次重新安裝後**清單裡的 Atype 會看起來是開的但其實失效，要關掉再打開一次。之後加入 Apple Developer Program 用固定簽章就不會這樣。
+### 輔助使用權限（兩種方式都要）
+
+Atype 要能把字貼進其他 App，需要「系統設定 → 隱私權與安全性 → 輔助使用」打開 Atype。麥克風權限會在第一次錄音時詢問。
+
+目前用 ad-hoc 簽章，**每次重新安裝或更新後**，清單裡的 Atype 會看起來是開的但其實失效。設定頁一直顯示「等待中」就是這個原因：在清單裡選 Atype 按「−」刪掉，按「＋」重新加入 `/Applications/Atype.app`，然後結束 Atype 再打開。還是不行就執行 `tccutil reset Accessibility com.atype.mac`，再打開 Atype 重新授權。
 
 開發時用 `bun run tauri dev`。這時沒有 Atype.app，權限算在啟動它的終端機（例如 iTerm）身上，所以要給的是終端機的麥克風與輔助使用權限。開發版與安裝版共用同一份設定、模型與歷史。
 
 ## 第一次設定
 
 1. **模型**：首頁選 SenseVoice Small（約 240 MB）。想比較就到「模型」頁再下載 Qwen3-ASR 0.6B。
-2. **LLM 整理**：到 https://aistudio.google.com/apikey 建 Gemini API key。側邊欄「後處理」：供應商 Gemini、貼上 key、模型填 `gemini-3.1-flash-lite`。提示詞預設就是「整理口語（zh-TW）」。沒有 key 也能用，只是不會去贅詞與整理語句。
+2. **LLM 整理**：請自備 Gemini API key（https://aistudio.google.com/apikey 免費建立）。側邊欄「後處理」：供應商 Gemini、貼上 key。模型預設 `gemini-3.1-flash-lite`，提示詞預設「整理口語（zh-TW）」，都不用改。模型選單只列得出能用的模型。沒有 key 也能用，只是不會去贅詞、整理語句或幫你寫信。
 3. **熱鍵**：預設 Option + Space。要改 Fn：在「一般」裡改，並把「系統設定 → 鍵盤 → 按下 🌐 鍵時」設成「不執行任何操作」。
 
 ## 每天怎麼用
@@ -32,8 +53,12 @@ bun run app:install    # 編譯 release 版，裝到 /Applications/Atype.app 並
 | 說很長一段 | 輕按一下 Option + Space 開始，說完再按一下 |
 | 取消 | 錄音中按 Esc |
 | 找回剛才的文字 | 側邊欄「歷史紀錄」，或選單列圖示的最近一筆 |
+| 請 AI 幫你寫（信、訊息、會議記錄…） | 按住**指令熱鍵**（「轉錄並後處理」，預設右 Option + 右 Command）說內容或大綱，開頭可以說「回信」「條列」「會議記錄」「翻英文」等口令 |
 
-後處理開著時，主熱鍵就會經過 LLM。LLM 超過 2.5 秒沒回應，就貼本機處理過的原文，不會卡住。
+- **主熱鍵**只整理口語，不改意思。後處理開著時經過 LLM，超過 2.5 秒沒回應就貼本機處理過的原文，不會卡住。
+- **指令熱鍵**會依口令把內容寫成指定格式，缺的資訊標【待補】，不會自己編。用哪個提示詞、等多久（預設 12 秒）在「個人化」頁設定。內建提示詞：整理口語、萬用口令、正式信件、訊息回覆、改成正式語氣、條列重點、會議記錄、待辦清單、公告／通知、翻成英文；都可以在「後處理」頁修改。
+- **浮窗**：一般聽寫是圓點；指令熱鍵從錄音開始就是 ✦ 加綠色光圈；AI 正在整理或撰寫時也是 ✦。
+- **詞典**（「個人化」頁）：修正常聽錯的人名、產品名。中文詞只填正確寫法就會自動比對同音字；英文詞要填聽錯的拼法。在本機處理，不開 AI 也有效。
 
 **Dock**：設定完成後，Atype 開啟時只出現在選單列，不會出現在 Dock。從選單列圖示打開設定視窗時 Dock 才會暫時出現圖示，關掉視窗就消失。想每次開啟都顯示視窗，到「進階」關掉「隱藏啟動」。
 
@@ -66,7 +91,7 @@ bun run app:install
 |---|---|
 | 設定、`atype.json`、歷史資料庫、錄音 | `~/Library/Application Support/com.atype.mac/` |
 | 下載的 GGUF 模型 | `~/.cache/huggingface/hub/` |
-| 第二大腦 | iCloud 雲碟的 `Atype/brain/`（沒有 iCloud Drive 時在上面的資料目錄裡的 `brain/`） |
+| 第二大腦 | iCloud 雲碟的 `service-db/Atype/`（沒有 iCloud Drive 時在上面的資料目錄裡的 `brain/`） |
 | Log | `~/Library/Logs/com.atype.mac/` |
 
 第二大腦每一筆寫兩處：`atype.jsonl`（時間、貼上的文字、原始辨識、是否經過 LLM）與 `年/年-月-日.md` 的每日紀錄。App 的歷史紀錄只保留最近 300 筆，第二大腦不會刪。
@@ -82,6 +107,9 @@ bun run app:install
 | `llm_on_main_hotkey` | `true` | 主熱鍵也經過 LLM（後處理開著時） |
 | `brain_enabled` | `true` | 寫入第二大腦 |
 | `brain_dir` | `null` | 第二大腦資料夾，`null` 用預設；可填 `~/Documents/Obsidian/Atype` 這類路徑 |
+| `dictionary` | `[]` | 詞典，`{"term": "iCloud", "aliases": ["iclo"]}` 的清單 |
+| `command_prompt_id` | `"atype_smart"` | 指令熱鍵用的提示詞（萬用口令） |
+| `command_timeout_ms` | `12000` | 指令熱鍵的時間預算 |
 | `defaults_version` | — | App 自己管理，不用改 |
 
 ## 程式結構

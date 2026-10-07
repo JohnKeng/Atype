@@ -6,11 +6,14 @@
 //! so later changes the user makes in the UI are never overwritten.
 
 use super::config;
-use crate::settings::{get_settings, write_settings, AppSettings, ChineseScript};
+use crate::settings::{
+    get_settings, write_settings, AppSettings, ChineseScript, DEFAULT_GEMINI_MODEL,
+    DEFAULT_PROMPT_ID,
+};
 use log::info;
 use tauri::AppHandle;
 
-pub const VERSION: u32 = 2;
+pub const VERSION: u32 = 3;
 
 /// Version 1: LLM cleanup on, Traditional output, a useful history size,
 /// no upstream "what's new" notes.
@@ -28,6 +31,36 @@ pub fn apply_v1(s: &mut AppSettings) {
 pub fn apply_v2(s: &mut AppSettings) {
     s.start_hidden = true;
     s.show_tray_icon = true;
+}
+
+/// Version 3: make the LLM cleanup actually run, and add the format presets
+/// (email, chat reply, meeting notes, ...). Select the zh-TW cleanup
+/// prompt when none is selected (Handy shipped with none, so every call was
+/// skipped), and replace an empty or unusable Gemini model (live, TTS, ...)
+/// with the default.
+pub fn apply_v3(s: &mut AppSettings) {
+    super::prompts::add_missing(&mut s.post_process_prompts);
+    let selected_exists = s
+        .post_process_selected_prompt_id
+        .as_ref()
+        .is_some_and(|id| s.post_process_prompts.iter().any(|p| &p.id == id));
+    if !selected_exists {
+        if let Some(prompt) = s
+            .post_process_prompts
+            .iter()
+            .find(|p| p.id == DEFAULT_PROMPT_ID)
+            .or_else(|| s.post_process_prompts.first())
+        {
+            s.post_process_selected_prompt_id = Some(prompt.id.clone());
+        }
+    }
+    let gemini = s
+        .post_process_models
+        .entry("gemini".to_string())
+        .or_default();
+    if gemini.trim().is_empty() || !super::is_chat_model(gemini) {
+        *gemini = DEFAULT_GEMINI_MODEL.to_string();
+    }
 }
 
 /// Setup is done once a transcription model has been chosen.
@@ -49,6 +82,10 @@ pub fn apply_once(app: &AppHandle) {
     if applied < 2 && setup_done(&settings) {
         apply_v2(&mut settings);
         applied = 2;
+    }
+    if applied == 2 {
+        apply_v3(&mut settings);
+        applied = 3;
     }
     if applied == cfg.defaults_version {
         return;
@@ -98,5 +135,28 @@ mod tests {
         apply_v2(&mut s);
         assert!(s.start_hidden);
         assert!(s.show_tray_icon);
+    }
+
+    #[test]
+    fn v3_selects_the_prompt_and_fixes_the_gemini_model() {
+        let mut s = crate::settings::get_default_settings();
+        s.post_process_selected_prompt_id = None;
+        s.post_process_models
+            .insert("gemini".into(), "models/gemini-3.8-live".into());
+        apply_v3(&mut s);
+        assert_eq!(
+            s.post_process_selected_prompt_id.as_deref(),
+            Some(DEFAULT_PROMPT_ID)
+        );
+        assert_eq!(s.post_process_models["gemini"], DEFAULT_GEMINI_MODEL);
+    }
+
+    #[test]
+    fn v3_keeps_a_working_choice() {
+        let mut s = crate::settings::get_default_settings();
+        s.post_process_models
+            .insert("gemini".into(), "models/gemini-3.5-flash".into());
+        apply_v3(&mut s);
+        assert_eq!(s.post_process_models["gemini"], "models/gemini-3.5-flash");
     }
 }

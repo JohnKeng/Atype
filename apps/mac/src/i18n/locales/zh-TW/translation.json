@@ -220,6 +220,18 @@
         "chars": "字數",
         "entries": "筆數"
       },
+      "dictionary": {
+        "title": "詞典",
+        "description": "修正常聽錯的人名、產品名和用語。在本機處理，不開 AI 也有效；開了 AI 時也會把這些詞告訴它",
+        "term": "正確寫法",
+        "aliases": "常見錯法（用逗號或、分隔）",
+        "termPlaceholder": "正確寫法，例如 iCloud",
+        "aliasesPlaceholder": "錯法，例如 iclo、icrow（中文詞可留空）",
+        "soundOnly": "留空：中文詞會自動比對同音字",
+        "add": "新增",
+        "remove": "刪除",
+        "empty": "還沒有詞條。中文詞只要填正確寫法，同音的錯字會自動修正（例如「程式碼」會修好「城市馬」）；英文詞請把聽錯的拼法填在錯法欄。"
+      },
       "brain": {
         "title": "第二大腦",
         "enabled": {
@@ -228,7 +240,7 @@
         },
         "folder": {
           "title": "資料夾",
-          "description": "預設是 iCloud 雲碟的 Atype/brain；沒有 iCloud 時放在 App 資料夾",
+          "description": "預設是 iCloud 雲碟的 service-db/Atype；沒有 iCloud 時放在 App 資料夾",
           "default": "預設位置"
         },
         "choose": "選擇資料夾",
@@ -247,6 +259,14 @@
           "description": "AI 超過這個時間就直接貼上排版後的原文",
           "value": "{{seconds}} 秒"
         },
+        "commandPrompt": {
+          "title": "指令熱鍵的提示詞",
+          "description": "按「後處理」熱鍵（預設右 Option + 右 Command）說話時用這個提示詞，例如把大綱寫成正式信件。主熱鍵仍只做口語整理"
+        },
+        "commandTimeout": {
+          "label": "指令熱鍵時間預算",
+          "description": "寫信、會議記錄需要較久；超過時間就貼上排版後的原文"
+        },
         "zhPost": {
           "label": "中文排版（繁體、全形標點、中英空格）",
           "description": "轉成台灣繁體、改用全形標點，並在中英文之間加空格"
@@ -256,7 +276,7 @@
         "title": "試試看",
         "input": "原文",
         "placeholder": "貼上一段中文",
-        "button": "套用中文排版",
+        "button": "套用詞典與中文排版",
         "result": "結果"
       },
       "errors": {
@@ -768,7 +788,8 @@
   },
   "overlay": {
     "transcribing": "正在轉錄...",
-    "processing": "處理中..."
+    "processing": "AI 整理中…",
+    "composing": "AI 撰寫中…"
   },
   "whatsNew": {
     "title": "Atype v{{version}} 新功能"

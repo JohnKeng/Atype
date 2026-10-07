@@ -16,6 +16,7 @@ use tauri_plugin_opener::OpenerExt;
 /// Bounds for the LLM time budget accepted from the settings page.
 pub const LLM_TIMEOUT_MIN_MS: u64 = 500;
 pub const LLM_TIMEOUT_MAX_MS: u64 = 10_000;
+pub const COMMAND_TIMEOUT_MAX_MS: u64 = 30_000;
 
 /// [`AtypeConfig`] plus the folder the second brain actually writes to.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
@@ -26,6 +27,9 @@ pub struct AtypeConfigView {
     pub brain_enabled: bool,
     pub brain_dir: Option<String>,
     pub defaults_version: u32,
+    pub dictionary: Vec<super::dictionary::DictEntry>,
+    pub command_prompt_id: String,
+    pub command_timeout_ms: u64,
     /// `brain_dir` after defaults and `~/` expansion (empty if unknown).
     pub resolved_brain_dir: String,
 }
@@ -52,6 +56,9 @@ fn view(app: &AppHandle, cfg: AtypeConfig) -> AtypeConfigView {
         brain_enabled: cfg.brain_enabled,
         brain_dir: cfg.brain_dir,
         defaults_version: cfg.defaults_version,
+        dictionary: cfg.dictionary,
+        command_prompt_id: cfg.command_prompt_id,
+        command_timeout_ms: cfg.command_timeout_ms,
         resolved_brain_dir: resolved,
     }
 }
@@ -67,6 +74,10 @@ fn sanitize(mut incoming: AtypeConfig, stored: &AtypeConfig) -> AtypeConfig {
         .map(|d| d.trim().to_string())
         .filter(|d| !d.is_empty());
     incoming.defaults_version = stored.defaults_version;
+    incoming.dictionary = super::dictionary::sanitize(incoming.dictionary);
+    incoming.command_timeout_ms = incoming
+        .command_timeout_ms
+        .clamp(LLM_TIMEOUT_MIN_MS, COMMAND_TIMEOUT_MAX_MS);
     incoming
 }
 
@@ -115,11 +126,16 @@ pub fn get_atype_stats(app: AppHandle) -> Result<AtypeStats, String> {
     Ok(aggregate(lines, Local::now()))
 }
 
-/// Run the deterministic Chinese layer on `text` (the "試試看" box).
+/// Run the dictionary and the deterministic Chinese layer on `text` (the
+/// "試試看" box), the same local steps a dictation gets without the LLM.
 #[tauri::command]
 #[specta::specta]
-pub fn atype_polish(text: String) -> String {
-    super::zh_post::polish(&text)
+pub fn atype_polish(app: AppHandle, text: String) -> String {
+    local_polish(&text, &config::load(&app).dictionary)
+}
+
+fn local_polish(text: &str, dictionary: &[super::dictionary::DictEntry]) -> String {
+    super::zh_post::polish(&super::dictionary::apply(text, dictionary))
 }
 
 fn count_chars(text: &str) -> u64 {
@@ -322,8 +338,13 @@ mod tests {
     #[test]
     fn polish_command_wraps_zh_post() {
         assert_eq!(
-            atype_polish("我们明天下午3:30开会,地点在Costco旁边.".into()),
+            local_polish("我们明天下午3:30开会,地点在Costco旁边.", &[]),
             "我們明天下午 3:30 開會，地點在 Costco 旁邊。"
         );
+        let dict = [super::super::dictionary::DictEntry {
+            term: "iCloud".into(),
+            aliases: vec!["iclo".into()],
+        }];
+        assert_eq!(local_polish("存在iclo上", &dict), "存在 iCloud 上");
     }
 }

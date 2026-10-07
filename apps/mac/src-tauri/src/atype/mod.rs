@@ -13,6 +13,8 @@ pub mod brain;
 pub mod commands;
 pub mod config;
 pub mod defaults;
+pub mod dictionary;
+pub mod prompts;
 pub mod zh_post;
 
 use crate::managers::model::ModelInfo;
@@ -21,6 +23,86 @@ use tauri::AppHandle;
 /// Whether the plain "transcribe" hotkey should also run LLM post-processing.
 pub fn main_hotkey_polishes(app: &AppHandle) -> bool {
     crate::settings::get_settings(app).post_process_enabled && config::load(app).llm_on_main_hotkey
+}
+
+/// Name fragments of models that cannot clean up text over a plain chat
+/// completion: realtime/WebSocket-only (`live`), speech, image, video, music,
+/// embeddings and agent previews. Matched against the lowercased model id.
+const NON_CHAT_MODEL_MARKERS: &[&str] = &[
+    "live",
+    "realtime",
+    "streaming",
+    "native-audio",
+    "tts",
+    "transcribe",
+    "whisper",
+    "image",
+    "imagen",
+    "nano-banana",
+    "veo",
+    "lyria",
+    "embedding",
+    "aqa",
+    "robotics",
+    "computer-use",
+    "deep-research",
+    "antigravity",
+    "moderation",
+    "dall-e",
+];
+
+/// Drop models the post-processing call cannot use from a provider's model
+/// list, so they never show up in the model picker.
+pub fn chat_models_only(models: Vec<String>) -> Vec<String> {
+    models.into_iter().filter(|m| is_chat_model(m)).collect()
+}
+
+pub fn is_chat_model(model: &str) -> bool {
+    let id = model.to_lowercase();
+    !NON_CHAT_MODEL_MARKERS
+        .iter()
+        .any(|marker| id.contains(marker))
+}
+
+/// For the command hotkey: switch this (per-call) copy of the settings to the
+/// command prompt, when it exists, and return the command time budget.
+/// Otherwise return the normal budget.
+pub fn prompt_for_call(
+    settings: &mut crate::settings::AppSettings,
+    cfg: &config::AtypeConfig,
+    command: bool,
+) -> u64 {
+    if command
+        && settings
+            .post_process_prompts
+            .iter()
+            .any(|p| p.id == cfg.command_prompt_id)
+    {
+        settings.post_process_selected_prompt_id = Some(cfg.command_prompt_id.clone());
+        return cfg.command_timeout_ms.max(cfg.llm_timeout_ms);
+    }
+    cfg.llm_timeout_ms
+}
+
+/// Append the dictionary's `<known_terms>` block to the selected prompt in
+/// this (per-call) copy of the settings. The stored prompt is not changed.
+pub fn add_known_terms(
+    settings: &mut crate::settings::AppSettings,
+    dictionary: &[dictionary::DictEntry],
+) {
+    let Some(block) = dictionary::known_terms_prompt(dictionary) else {
+        return;
+    };
+    let Some(id) = settings.post_process_selected_prompt_id.clone() else {
+        return;
+    };
+    if let Some(prompt) = settings
+        .post_process_prompts
+        .iter_mut()
+        .find(|p| p.id == id)
+    {
+        prompt.prompt.push_str(&block);
+    }
 }
 
 /// Everything Atype wires up at runtime. Called once after Handy's managers
@@ -84,6 +166,33 @@ pub fn shape_model_list(list: &mut Vec<ModelInfo>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn model_picker_hides_non_chat_models() {
+        let got = chat_models_only(
+            [
+                "models/gemini-3.1-flash-lite",
+                "models/gemini-3.8-live",
+                "models/gemini-3.8-flash-tts",
+                "models/gemini-3.1-flash-image",
+                "models/gemini-embedding-2",
+                "models/gemini-2.5-flash-native-audio-latest",
+                "models/veo-3.1-generate-preview",
+                "models/gemini-3.5-flash",
+                "claude-haiku-4-5",
+            ]
+            .map(String::from)
+            .to_vec(),
+        );
+        assert_eq!(
+            got,
+            [
+                "models/gemini-3.1-flash-lite",
+                "models/gemini-3.5-flash",
+                "claude-haiku-4-5"
+            ]
+        );
+    }
 
     #[test]
     fn allowlist_order_and_recommendation() {

@@ -11,6 +11,10 @@ use tauri::AppHandle;
 
 pub const FILE_NAME: &str = "atype.json";
 
+/// Default second-brain folder inside iCloud Drive, next to the other
+/// services' data in `service-db`.
+pub const DEFAULT_ICLOUD_BRAIN: &str = "service-db/Atype";
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
 #[serde(default)]
 pub struct AtypeConfig {
@@ -25,12 +29,21 @@ pub struct AtypeConfig {
     pub llm_on_main_hotkey: bool,
     /// Append every transcription to the second-brain folder.
     pub brain_enabled: bool,
-    /// Second-brain folder. `None` = iCloud Drive/Atype/brain on macOS when
-    /// iCloud Drive exists, otherwise `<app data>/brain`. `~/` is expanded.
+    /// Second-brain folder. `None` = iCloud Drive/service-db/Atype on macOS
+    /// when iCloud Drive exists, otherwise `<app data>/brain`. `~/` is expanded.
     pub brain_dir: Option<String>,
     /// Which one-time Atype defaults have been applied to Handy's settings
     /// (see `atype::defaults`). Managed by the app; leave it alone.
     pub defaults_version: u32,
+    /// Personal dictionary (see `atype::dictionary`).
+    pub dictionary: Vec<super::dictionary::DictEntry>,
+    /// Prompt used by the command hotkey (Handy's "transcribe with
+    /// post-process" binding): turn a spoken outline into an email, notes,
+    /// ... The main hotkey keeps the prompt selected in 後處理.
+    pub command_prompt_id: String,
+    /// Time budget for the command hotkey; writing a whole email takes longer
+    /// than cleaning up a sentence.
+    pub command_timeout_ms: u64,
 }
 
 impl Default for AtypeConfig {
@@ -42,6 +55,9 @@ impl Default for AtypeConfig {
             brain_enabled: true,
             brain_dir: None,
             defaults_version: 0,
+            dictionary: Vec::new(),
+            command_prompt_id: super::prompts::SMART_ID.to_string(),
+            command_timeout_ms: 12_000,
         }
     }
 }
@@ -117,7 +133,7 @@ pub fn brain_dir(app: &AppHandle, cfg: &AtypeConfig) -> Option<PathBuf> {
         if let Some(home) = std::env::var_os("HOME") {
             let icloud = PathBuf::from(home).join("Library/Mobile Documents/com~apple~CloudDocs");
             if icloud.is_dir() {
-                return Some(icloud.join("Atype/brain"));
+                return Some(icloud.join(DEFAULT_ICLOUD_BRAIN));
             }
         }
     }

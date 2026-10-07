@@ -1281,7 +1281,10 @@ pub async fn fetch_post_process_models(
         ));
     }
 
-    crate::llm_client::fetch_models(provider, api_key).await
+    // Atype: hide models a plain chat completion cannot use (live, TTS, image...).
+    crate::llm_client::fetch_models(provider, api_key)
+        .await
+        .map(crate::atype::chat_models_only)
 }
 
 #[tauri::command]

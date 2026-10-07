@@ -1,6 +1,6 @@
 [package]
 name = "atype"
-version = "0.1.0"
+version = "0.2.0"
 description = "Atype (fork of Handy)"
 authors = ["John Keng", "cjpais (Handy)"]
 edition = "2021"
@@ -82,6 +82,7 @@ transcribe-rs = { version = "0.3.8", features = ["onnx"] }
 transcribe-cpp = { version = "0.2.4", default-features = false }
 handy-keys = "0.3.4"
 ferrous-opencc = "0.2.3"
+pinyin = { version = "0.11", default-features = false, features = ["plain", "heteronym"] }
 clap = { version = "4", features = ["derive"] }
 specta = "=2.0.0-rc.22"
 specta-typescript = "0.0.9"

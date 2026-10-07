@@ -10,6 +10,9 @@ import { ToggleSwitch } from "../../ui/ToggleSwitch";
 import { Slider } from "../../ui/Slider";
 import { Button } from "../../ui/Button";
 import { Textarea } from "../../ui/Textarea";
+import { DictionaryEditor } from "./DictionaryEditor";
+import { Dropdown } from "../../ui/Dropdown";
+import { useSettings } from "../../../hooks/useSettings";
 
 const SAMPLE_TEXT = "我们明天下午3:30开会,地点在Costco旁边.";
 const STATS_REFRESH_DELAY_MS = 500;
@@ -30,6 +33,9 @@ const toConfig = (view: AtypeConfigView): AtypeConfig => ({
   brain_enabled: view.brain_enabled,
   brain_dir: view.brain_dir,
   defaults_version: view.defaults_version,
+  dictionary: view.dictionary,
+  command_prompt_id: view.command_prompt_id,
+  command_timeout_ms: view.command_timeout_ms,
 });
 
 const errorText = (error: unknown) =>
@@ -37,6 +43,8 @@ const errorText = (error: unknown) =>
 
 export const AtypeSettings: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { getSetting } = useSettings();
+  const prompts = getSetting("post_process_prompts") || [];
   const [config, setConfig] = useState<AtypeConfigView | null>(null);
   const [stats, setStats] = useState<AtypeStats>(EMPTY_STATS);
   const [sample, setSample] = useState(SAMPLE_TEXT);
@@ -211,6 +219,20 @@ export const AtypeSettings: React.FC = () => {
       </SettingsGroup>
 
       {config && (
+        <SettingsGroup
+          title={t("settings.atype.dictionary.title")}
+          description={t("settings.atype.dictionary.description")}
+        >
+          <div className="px-4 py-3">
+            <DictionaryEditor
+              entries={config.dictionary}
+              onSave={(dictionary) => update({ dictionary })}
+            />
+          </div>
+        </SettingsGroup>
+      )}
+
+      {config && (
         <SettingsGroup title={t("settings.atype.brain.title")}>
           <ToggleSwitch
             checked={config.brain_enabled}
@@ -285,6 +307,33 @@ export const AtypeSettings: React.FC = () => {
             formatValue={(ms) =>
               t("settings.atype.cleanup.timeout.value", {
                 seconds: (ms / 1000).toFixed(1),
+              })
+            }
+            grouped={true}
+          />
+          <SettingContainer
+            title={t("settings.atype.cleanup.commandPrompt.title")}
+            description={t("settings.atype.cleanup.commandPrompt.description")}
+            grouped={true}
+          >
+            <Dropdown
+              className="min-w-56"
+              options={prompts.map((p) => ({ value: p.id, label: p.name }))}
+              selectedValue={config.command_prompt_id}
+              onSelect={(id) => update({ command_prompt_id: id })}
+            />
+          </SettingContainer>
+          <Slider
+            value={config.command_timeout_ms}
+            onChange={(ms) => update({ command_timeout_ms: ms })}
+            min={4000}
+            max={30000}
+            step={1000}
+            label={t("settings.atype.cleanup.commandTimeout.label")}
+            description={t("settings.atype.cleanup.commandTimeout.description")}
+            formatValue={(ms) =>
+              t("settings.atype.cleanup.timeout.value", {
+                seconds: (ms / 1000).toFixed(0),
               })
             }
             grouped={true}
