@@ -73,6 +73,7 @@ nav .btn { padding: 7px 16px; font-size: 14px; }
 
 /* video */
 .video-frame { margin: 48px auto 0; max-width: 400px; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); background: #000; }
+.video-frame.wide { max-width: 880px; border-radius: 16px; }
 
 /* hotkeys */
 .keys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 40px; }
