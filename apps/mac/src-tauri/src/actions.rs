@@ -403,9 +403,10 @@ pub(crate) async fn process_transcription_output(
     }
 
     if atype_cfg.zh_post_enabled {
-        final_text = crate::atype::zh_post::polish(&final_text);
+        final_text =
+            crate::atype::zh_post::drop_final_period(&crate::atype::zh_post::polish(&final_text));
         if let Some(text) = post_processed_text.as_mut() {
-            *text = crate::atype::zh_post::polish(text);
+            *text = crate::atype::zh_post::drop_final_period(&crate::atype::zh_post::polish(text));
         }
     }
 

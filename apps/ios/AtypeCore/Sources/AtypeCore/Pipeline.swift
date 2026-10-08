@@ -73,8 +73,8 @@ public struct Pipeline: Sendable {
                 result.llmError = String(describing: error)
             }
         }
-        result.text = zhPostEnabled ? ZhPost.polish(text) : text
-        if let p = result.polished, zhPostEnabled { result.polished = ZhPost.polish(p) }
+        result.text = zhPostEnabled ? ZhPost.dropFinalPeriod(ZhPost.polish(text)) : text
+        if let p = result.polished, zhPostEnabled { result.polished = ZhPost.dropFinalPeriod(ZhPost.polish(p)) }
         return result
     }
 }

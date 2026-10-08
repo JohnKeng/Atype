@@ -5,6 +5,14 @@ import Testing
 // Same cases as the Mac app's Rust tests (zh_post.rs, dictionary.rs).
 
 @Suite struct ZhPostTests {
+    @Test func finalPeriodIsDroppedOthersKept() {
+        #expect(ZhPost.dropFinalPeriod("好的，我知道了。") == "好的，我知道了")
+        #expect(ZhPost.dropFinalPeriod("第一句。第二句。\n") == "第一句。第二句")
+        #expect(ZhPost.dropFinalPeriod("你用過 GitHub？") == "你用過 GitHub？")
+        #expect(ZhPost.dropFinalPeriod("太好了！") == "太好了！")
+        #expect(ZhPost.dropFinalPeriod("沒有句號") == "沒有句號")
+    }
+
     @Test func simplifiedIsConvertedWithTaiwanPhrases() {
         #expect(ZhPost.polish("这个软件的网络很好") == "這個軟體的網路很好")
         #expect(ZhPost.polish("用鼠标点一下") == "用滑鼠點一下")

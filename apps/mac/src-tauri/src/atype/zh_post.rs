@@ -217,9 +217,27 @@ pub fn polish(text: &str) -> String {
     collapse_spaces(&t)
 }
 
+/// Drop the full stop that ends the whole text (a recognizer adds one to
+/// every take), so text dictated into the middle of a sentence, or as an
+/// addition, does not carry a stray 。. ？ and ！ stay: they carry meaning.
+pub fn drop_final_period(text: &str) -> String {
+    let t = text.trim_end();
+    t.strip_suffix('。').unwrap_or(t).to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn final_period_is_dropped_others_kept() {
+        assert_eq!(drop_final_period("好的，我知道了。"), "好的，我知道了");
+        assert_eq!(drop_final_period("第一句。第二句。\n"), "第一句。第二句");
+        assert_eq!(drop_final_period("你用過 GitHub？"), "你用過 GitHub？");
+        assert_eq!(drop_final_period("太好了！"), "太好了！");
+        assert_eq!(drop_final_period("沒有句號"), "沒有句號");
+        assert_eq!(drop_final_period(""), "");
+    }
 
     #[test]
     fn simplified_is_converted_with_taiwan_phrases() {

@@ -130,6 +130,16 @@ public enum ZhPost {
         return out.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Drop the full stop that ends the whole text (a recognizer adds one to
+    /// every take), so text dictated into the middle of a sentence, or as an
+    /// addition, does not carry a stray 。. ？ and ！ stay: they carry meaning.
+    public static func dropFinalPeriod(_ text: String) -> String {
+        var t = text
+        while let last = t.last, last.isWhitespace { t.removeLast() }
+        if t.hasSuffix("。") { t.removeLast() }
+        return t
+    }
+
     /// The whole deterministic layer, in order.
     public static func polish(_ text: String) -> String {
         collapseSpaces(panguSpacing(fullwidthPunctuation(toTraditional(text))))
