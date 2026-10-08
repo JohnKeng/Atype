@@ -45,7 +45,7 @@
         <video src="assets/iphone-demo.mp4" poster="assets/iphone-poster.jpg" controls playsinline preload="metadata"></video>
       </div>
       <div class="phone-points">
-        <div><h3>點一下就開始，自動回到原本的 App</h3><p>點鍵盤上的麥克風，Atype 會先開始收音，接著自動跳回你正在打字的 App（LINE、訊息、郵件、Slack…）。說完再點一次，字就插進去。</p></div>
+        <div><h3>點一下就開始，自動回到原本的 App</h3><p>點鍵盤上的麥克風，Atype 會先開始收音，接著自動跳回你正在打字的 App，停在原本的畫面（任何 App 都可以）。說完再點一次，字就插進去。</p></div>
         <div><h3>連續說不必再跳</h3><p>用完後麥克風待命幾分鐘（可設定，時間到就真的關掉），這段時間再點麥克風直接開始，不必再切換 App。</p></div>
         <div><h3>右上一鍵切換：手機 ／ ✦ AI</h3><p>「手機」只在本機辨識，最快；切到「✦ AI」，麥克風亮起彩色框，說完由 AI 修同音錯字與標點，開頭說「回信」「回訊息」「會議記錄」「正式一點」「翻英文」就寫成那個格式。署名、職稱用「我的資料」自動帶入。</p></div>
         <div><h3>收到聲音看得見，說錯可以復原</h3><p>錄音時點點跟著音量起伏，AI 模式還有旋轉的彩色光圈；插錯了按 ↶ 整段刪掉，再按 ↷ 放回來。</p></div>
@@ -121,7 +121,7 @@ open Atype.xcodeproj</code></pre></div></div>
     <h2>問與答</h2></div>
     <div style="height:24px"></div>
     <details><summary>為什麼點麥克風會先跳到 Atype？</summary><p>Apple 不允許第三方鍵盤使用麥克風，所有語音鍵盤（Typeless、Wispr Flow…）都是由 App 在背景收音。Atype 收音後會自動跳回你原本的 App；待命時間內再點麥克風就不必再跳。</p></details>
-    <details><summary>自動跳回支援哪些 App？</summary><p>LINE、訊息、備忘錄、郵件、提醒事項、Gmail、Outlook、Slack、WhatsApp、Telegram、Messenger、Instagram、Threads、X、微信、Discord、Notion、Obsidian、ChatGPT、Claude、Chrome、Teams 等。其他 App 點左上角「◀」回去即可。</p></details>
+    <details><summary>自動跳回支援哪些 App？</summary><p>所有 App。鍵盤會記下你從哪個 App 點麥克風，Atype 開始收音後直接把那個 App 叫回前景，停在原本的畫面（例如 Claude、ChatGPT 會回到原本的對話，不會另開新的）。少數情況認不出來源 App 時，點左上角「◀」回去即可。</p></details>
     <details><summary>可以在 App 裡直接用嗎？</summary><p>可以。首頁點麥克風說話，結果會自動複製，也能分享；歷史紀錄依日期分組。</p></details>
     <details><summary>字沒插進去怎麼辦？</summary><p>少數 App 會默默擋掉鍵盤插入的字。Atype 確認不到時會自動複製並在鍵盤上提示，長按輸入框貼上即可；App 的歷史紀錄也都留著。</p></details>
     <details><summary>手機和 AI 模式差在哪？</summary><p>「手機」只用 iPhone 本機辨識，說完立刻出字；「✦ AI」多一步讓 AI 修同音錯字（例如「轉案」改成「專案」）並依口令排成格式，大約多 1 秒，需要 API key。</p></details>
