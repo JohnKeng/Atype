@@ -155,11 +155,19 @@ final class KeyboardModel: ObservableObject {
             let before = proxy.documentContextBeforeInput ?? ""
             proxy.insertText(text)
             let after = proxy.documentContextBeforeInput ?? ""
-            DebugLog.log("kb", "insert check: before=\(before.suffix(12)) after=\(after.suffix(20))")
+            // Some apps drop the text silently; check the end of the field.
+            let tail = String(text.trimmingCharacters(in: .whitespacesAndNewlines).suffix(8))
+            let ok = !tail.isEmpty && after.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix(tail)
+            DebugLog.log("kb", "insert \(ok ? "ok" : "NOT CONFIRMED") \(text.count) chars: before=\(before.suffix(12)) after=\(after.suffix(20))")
             undoStack.append(text)
             redoStack.removeAll()
-            DebugLog.log("kb", "inserted \(text.count) chars")
-            message = ""
+            if ok {
+                Bridge.lastInsertConfirmed = true
+                message = ""
+            } else {
+                UIPasteboard.general.string = text
+                message = "可能沒插進去，已複製，長按輸入框貼上"
+            }
         }
     }
 

@@ -72,7 +72,7 @@ final class AppModel {
             self.liveVolatile = volatile
             Bridge.partial = final + volatile
             Bridge.post(.changed)
-            DebugLog.log("app", "partial final=\(final.count) volatile=\(volatile.count) bg=\(UIApplication.shared.applicationState != .active)")
+            if volatile.isEmpty { DebugLog.log("app", "partial final=\(final.count) bg=\(UIApplication.shared.applicationState != .active)") }
         }
         engine.model = recognizer
         listenToKeyboard()
@@ -300,9 +300,24 @@ final class AppModel {
         lastEntry = entry
         Bridge.publishResult(entry.text)
         DebugLog.log("app", "published \(entry.text.count) chars")
-        // Copy every result (keyboard takes too): if the text did not reach
-        // the text field, it can still be pasted.
-        if autoCopy { UIPasteboard.general.string = entry.text }
+        // Copy the result unless the keyboard confirms it reached the text
+        // field: a confirmed take must not push an unconfirmed one off the
+        // clipboard.
+        if autoCopy {
+            if fromKeyboard {
+                let text = entry.text
+                let copyTask = UIApplication.shared.beginBackgroundTask(withName: "atype.copy")
+                Task { @MainActor in
+                    defer { UIApplication.shared.endBackgroundTask(copyTask) }
+                    try? await Task.sleep(for: .seconds(2))
+                    guard !Bridge.lastInsertConfirmed else { return }
+                    UIPasteboard.general.string = text
+                    DebugLog.log("app", "insert not confirmed in 2 s: copied")
+                }
+            } else {
+                UIPasteboard.general.string = entry.text
+            }
+        }
         fromKeyboard = false
         phase = .idle
         publish()

@@ -23,7 +23,13 @@ enum DebugLog {
             defer { try? h.close() }
             _ = try? h.seekToEnd()
             try? h.write(contentsOf: Data(line.utf8))
-            if (try? h.offset()) ?? 0 > 400_000 { try? h.truncate(atOffset: 0) }
+            // Keep the previous 1 MB as debug.old.log instead of wiping it.
+            if (try? h.offset()) ?? 0 > 1_000_000 {
+                try? h.close()
+                let old = url.deletingLastPathComponent().appendingPathComponent("debug.old.log")
+                try? FileManager.default.removeItem(at: old)
+                try? FileManager.default.moveItem(at: url, to: old)
+            }
         } else {
             try? Data(line.utf8).write(to: url)
         }
