@@ -59,6 +59,24 @@ final class HostTracker: NSObject {
     }
 
     /// URL that reopens an app, for the apps people type in most.
+    /// Apps whose URL scheme starts something new (Claude and ChatGPT open
+    /// a new chat), so returning by URL would lose the user's conversation.
+    static let schemeResets: Set<String> = ["com.anthropic.claude", "com.openai.chat"]
+
+    /// Bring an installed app to the front as it was, through the private
+    /// LSApplicationWorkspace (may be refused on recent iOS; false then).
+    static func activate(bundleID: String) -> Bool {
+        guard let cls = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type else { return false }
+        let getDefault = NSSelectorFromString("defaultWorkspace")
+        let open = NSSelectorFromString("openApplicationWithBundleID:")
+        guard cls.responds(to: getDefault),
+              let workspace = cls.perform(getDefault)?.takeUnretainedValue() as? NSObject,
+              workspace.responds(to: open) else { return false }
+        typealias Open = @convention(c) (AnyObject, Selector, NSString) -> Bool
+        let imp = workspace.method(for: open)
+        return unsafeBitCast(imp, to: Open.self)(workspace, open, bundleID as NSString)
+    }
+
     static let schemes: [String: String] = [
         "jp.naver.line": "line://",
         "com.apple.MobileSMS": "ichat://",

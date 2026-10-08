@@ -184,6 +184,15 @@ final class AppModel {
 
     /// atype://start?mode=command|dictation (opened by the keyboard).
     func handle(url: URL) {
+        #if DEBUG
+        // atype://activate?id=<bundle id>: test the return-by-bundle-id path.
+        if url.host == "activate", let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first?.value {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                DebugLog.log("app", "debug activate \(id) -> \(HostTracker.activate(bundleID: id))")
+            }
+            return
+        }
+        #endif
         guard url.scheme == "atype", url.host == "start" else { return }
         let command = URLComponents(url: url, resolvingAgainstBaseURL: false)?
             .queryItems?.first(where: { $0.name == "mode" })?.value == "command"
@@ -413,7 +422,17 @@ final class AppModel {
                 DebugLog.log("app", "return: host unknown")
                 return
             }
-            guard host != "<null>", let scheme = HostTracker.schemes[host], let url = URL(string: scheme) else {
+            guard host != "<null>" else { return }
+            // Activating the app by bundle id brings back the screen as it was.
+            if HostTracker.activate(bundleID: host) {
+                DebugLog.log("app", "return: activated \(host)")
+                return
+            }
+            guard !HostTracker.schemeResets.contains(host) else {
+                DebugLog.log("app", "return: \(host) would open a new screen by URL, leaving it to ◀")
+                return
+            }
+            guard let scheme = HostTracker.schemes[host], let url = URL(string: scheme) else {
                 DebugLog.log("app", "return: no scheme for \(host)")
                 return
             }
