@@ -23,12 +23,15 @@ struct KeyboardView: View {
         }
     }
 
-    /// While the app records or works: one big button and one line of text.
+    /// While the app records or works: one big button centred in the
+    /// keyboard and one line of text under it (positions as in Typeless).
     private var sessionView: some View {
-        VStack(spacing: 14) {
-            HStack {
-                Text("Atype").font(.system(size: 17, weight: .bold))
-                Spacer()
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack {
+                Text("Atype").font(.system(size: 18, weight: .bold))
+                    .position(x: 18 + 30, y: 30)
                 if model.phase == .recording || model.phase == .preparing {
                     Button(action: model.cancel) {
                         Image(systemName: "xmark").font(.system(size: 18, weight: .semibold))
@@ -36,33 +39,32 @@ struct KeyboardView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("取消")
+                    .position(x: w - 42, y: 34)
                 }
-            }
-            .frame(height: 44)
-            Button { model.mic(command: model.commandMode) } label: {
-                ZStack {
-                    Circle().fill(scheme == .dark ? Color.white : Color(white: 0.07)).frame(width: 104, height: 104)
-                    if model.commandMode {
-                        Circle().strokeBorder(AngularGradient(colors: aiColors + [aiColors[0]], center: .center), lineWidth: 4)
-                            .frame(width: 104, height: 104)
-                            .rotationEffect(.degrees(spin ? 360 : 0))
-                            .animation(.linear(duration: 2.4).repeatForever(autoreverses: false), value: spin)
-                    }
-                    if model.phase == .recording {
-                        Dots(color: scheme == .dark ? .black : .white, level: model.level)
-                    } else {
-                        ProgressView().tint(scheme == .dark ? .black : .white)
+                Button { model.mic(command: model.commandMode) } label: {
+                    ZStack {
+                        Circle().fill(scheme == .dark ? Color.white : Color(white: 17 / 255)).frame(width: 108, height: 108)
+                        if model.commandMode {
+                            Circle().strokeBorder(AngularGradient(colors: aiColors + [aiColors[0]], center: .center), lineWidth: 4)
+                                .frame(width: 108, height: 108)
+                                .rotationEffect(.degrees(spin ? 360 : 0))
+                                .animation(.linear(duration: 2.4).repeatForever(autoreverses: false), value: spin)
+                        }
+                        if model.phase == .recording {
+                            Dots(color: scheme == .dark ? .black : .white, level: model.level)
+                        } else {
+                            ProgressView().tint(scheme == .dark ? .black : .white)
+                        }
                     }
                 }
+                .buttonStyle(.plain)
+                .disabled(model.phase != .recording)
+                .position(x: w / 2, y: h / 2 + 4)
+                Text(sessionText).font(.system(size: 16)).foregroundStyle(.secondary)
+                    .position(x: w / 2, y: h / 2 + 4 + 54 + 26)
             }
-            .buttonStyle(.plain)
-            .disabled(model.phase != .recording)
-            Text(sessionText).font(.subheadline).foregroundStyle(.secondary)
-            Spacer(minLength: 0)
         }
         .foregroundStyle(.primary)
-        .padding(.horizontal, 14)
-        .padding(.top, 10)
         .onAppear { spin = true }
     }
 

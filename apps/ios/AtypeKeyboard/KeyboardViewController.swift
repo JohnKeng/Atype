@@ -140,7 +140,10 @@ final class KeyboardModel: ObservableObject {
         warm = Bridge.appIsWarm
         // A result the app published while we were away (or just now).
         if visible, let proxy, let text = Bridge.takeResult() {
+            let before = proxy.documentContextBeforeInput ?? ""
             proxy.insertText(text)
+            let after = proxy.documentContextBeforeInput ?? ""
+            DebugLog.log("kb", "insert check: before=\(before.suffix(12)) after=\(after.suffix(20)) doc=\(proxy.documentIdentifier)")
             undoStack.append(text)
             redoStack.removeAll()
             DebugLog.log("kb", "inserted \(text.count) chars")

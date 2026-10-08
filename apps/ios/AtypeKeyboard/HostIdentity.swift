@@ -13,17 +13,24 @@ import UIKit
 
 enum HostIdentity {
     nonisolated(unsafe) private static var pidToBundle: [Int: String] = [:]
-    nonisolated(unsafe) private static var enabled = false
 
-    /// Force the arbiter client on so it keeps client state (call early).
-    static func enableArbiter() {
-        guard !enabled, let cls = NSClassFromString("_UIKeyboardArbiterClient") else { return }
-        enabled = true
-        if let m = class_getClassMethod(cls, NSSelectorFromString("enabled")) {
-            let block: @convention(block) (AnyObject) -> Bool = { _ in true }
-            method_setImplementation(m, imp_implementationWithBlock(block))
-        }
+    nonisolated(unsafe) private static var originalEnabled: IMP?
+
+    /// Force `+[_UIKeyboardArbiterClient enabled]` to YES only while `body`
+    /// reads the host, then restore it: the arbiter also carries the text
+    /// input session, and leaving it forced on can stop inserted text from
+    /// reaching the app.
+    private static func withArbiterEnabled<T>(_ body: () -> T) -> T {
+        guard let cls = NSClassFromString("_UIKeyboardArbiterClient"),
+              let m = class_getClassMethod(cls, NSSelectorFromString("enabled")) else { return body() }
+        let block: @convention(block) (AnyObject) -> Bool = { _ in true }
+        let original = method_setImplementation(m, imp_implementationWithBlock(block))
+        defer { method_setImplementation(m, original) }
+        return body()
     }
+
+    /// Kept for callers; no longer leaves the arbiter patched.
+    static func enableArbiter() {}
 
     private static func read(_ key: String, from o: NSObject?) -> Any? {
         guard let o, o.responds(to: NSSelectorFromString(key)) else { return nil }
@@ -47,7 +54,7 @@ enum HostIdentity {
 
     /// Remember the arbiter's (pid → bundle) pair as it is now.
     static func sample() {
-        guard let state = arbiterState() else { return }
+        guard let state = withArbiterEnabled({ arbiterState() }) else { return }
         let bundle = (read("sourceBundleIdentifier", from: state) ?? read("_sourceBundleIdentifier", from: state)) as? String
         let pid = (read("processIdentifier", from: state) ?? read("_processIdentifier", from: state)) as? NSNumber
         if let bundle, let pid, !bundle.hasPrefix("com.atype.") { pidToBundle[pid.intValue] = bundle }
@@ -58,7 +65,7 @@ enum HostIdentity {
         sample()
         let direct = read("_hostApplicationBundleIdentifier", from: controller) as? String
         let pid = (read("_hostProcessIdentifier", from: controller) as? NSNumber)?.intValue
-        let state = arbiterState()
+        let state = withArbiterEnabled { arbiterState() }
         let arbiterBundle = (read("sourceBundleIdentifier", from: state) ?? read("_sourceBundleIdentifier", from: state)) as? String
         let arbiterPid = (read("processIdentifier", from: state) ?? read("_processIdentifier", from: state)) as? NSNumber
         let note = "direct=\(direct ?? "nil") pid=\(pid.map(String.init) ?? "nil") arbiter=\(arbiterBundle ?? "nil")/\(arbiterPid?.stringValue ?? "nil") state=\(state.map { String(describing: type(of: $0)) } ?? "nil") map=\(pidToBundle)"
