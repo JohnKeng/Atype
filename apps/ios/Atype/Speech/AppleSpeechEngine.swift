@@ -127,7 +127,8 @@ final class AppleSpeechEngine {
     /// Called with (finalized, volatile) text while recording.
     var onPartial: ((String, String) -> Void)?
 
-    private let audioEngine = AVAudioEngine()
+    /// Replaced after iOS restarts its media services (the old one is dead).
+    private var audioEngine = AVAudioEngine()
     private let sink = AudioSink()
     private var tapInstalled = false
     private var analyzer: SpeechAnalyzer?
@@ -157,6 +158,13 @@ final class AppleSpeechEngine {
     /// until a take starts.
     func openMic() throws {
         guard !audioEngine.isRunning else { return }
+        // installTap raises (and kills the app) on an invalid format, e.g. an
+        // engine left over from before a media services reset.
+        if !Self.usable(audioEngine.inputNode.outputFormat(forBus: 0)) {
+            DebugLog.log("app", "input format unusable, rebuilding the audio engine")
+            rebuildEngine()
+            guard Self.usable(audioEngine.inputNode.outputFormat(forBus: 0)) else { throw EngineError.noAudioFormat }
+        }
         let input = audioEngine.inputNode
         if !tapInstalled {
             input.installTap(onBus: 0, bufferSize: 4096, format: input.outputFormat(forBus: 0), block: Self.makeTap(sink))
@@ -164,6 +172,19 @@ final class AppleSpeechEngine {
         }
         audioEngine.prepare()
         try audioEngine.start()
+    }
+
+    private static func usable(_ f: AVAudioFormat) -> Bool { f.sampleRate > 0 && f.channelCount > 0 }
+
+    /// Drop the engine and start from a new one (after iOS restarted its
+    /// media services, every audio object of the old server is invalid).
+    func rebuildEngine() {
+        sink.detach()
+        resultsTask?.cancel()
+        resultsTask = nil
+        analyzer = nil
+        audioEngine = AVAudioEngine()
+        tapInstalled = false
     }
 
     /// Restart the audio engine (after an interruption or a stalled input),

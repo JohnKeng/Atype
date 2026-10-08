@@ -370,8 +370,25 @@ final class AppModel {
             let reason = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
             Task { @MainActor in DebugLog.log("app", "audio route change reason=\(reason) phase=\(self.phase)") }
         }
+        // iOS restarted its audio server: every engine and session setting
+        // is gone. Rebuild, end standby (the keyboard then wakes the app,
+        // which sets the session up again) and drop a take in progress.
         center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { _ in
-            Task { @MainActor in DebugLog.log("app", "media services reset phase=\(self.phase)") }
+            Task { @MainActor in
+                DebugLog.log("app", "media services reset phase=\(self.phase)")
+                let wasBusy = self.phase != .idle
+                self.engine.rebuildEngine()
+                self.standbyTimer?.invalidate()
+                self.heartbeatTimer?.invalidate()
+                self.heartbeatTimer = nil
+                Bridge.standbyUntil = .distantPast
+                if wasBusy {
+                    self.errorMessage = "音訊服務重新啟動，請再說一次"
+                    self.fromKeyboard = false
+                    self.phase = .idle
+                }
+                self.publish()
+            }
         }
     }
 
