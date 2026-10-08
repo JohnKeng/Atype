@@ -152,7 +152,7 @@ final class KeyboardModel: ObservableObject {
             let before = proxy.documentContextBeforeInput ?? ""
             proxy.insertText(text)
             let after = proxy.documentContextBeforeInput ?? ""
-            DebugLog.log("kb", "insert check: before=\(before.suffix(12)) after=\(after.suffix(20)) doc=\(proxy.documentIdentifier)")
+            DebugLog.log("kb", "insert check: before=\(before.suffix(12)) after=\(after.suffix(20))")
             undoStack.append(text)
             redoStack.removeAll()
             DebugLog.log("kb", "inserted \(text.count) chars")
