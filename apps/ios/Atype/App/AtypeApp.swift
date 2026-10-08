@@ -14,7 +14,11 @@ struct AtypeApp: App {
                 .onChange(of: scenePhase) { _, phase in
                     // Pick up prompt/dictionary edits made on the Mac.
                     DebugLog.log("app", "scene \(phase)")
-                    if phase == .active, !model.isBusy { model.reloadConfig() }
+                    if phase == .active, !model.isBusy {
+                        model.reloadConfig()
+                        // The keyboard's 手機 / AI switch may have changed it.
+                        if model.polishDictation != Bridge.polishDictation { model.polishDictation = Bridge.polishDictation }
+                    }
                 }
         }
     }

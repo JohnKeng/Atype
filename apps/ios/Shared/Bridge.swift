@@ -40,6 +40,14 @@ enum Bridge {
         static let message = "message"
         static let hostBundleID = "hostBundleID"
         static let level = "level"
+        static let polishDictation = "polishDictation"
+    }
+
+    /// The main mic runs the AI cleanup prompt (set from the keyboard's
+    /// top-right switch or the app's settings).
+    static var polishDictation: Bool {
+        get { defaults.bool(forKey: Key.polishDictation) }
+        set { defaults.set(newValue, forKey: Key.polishDictation) }
     }
 
     /// Microphone level 0…1, updated ~12 times a second while recording.

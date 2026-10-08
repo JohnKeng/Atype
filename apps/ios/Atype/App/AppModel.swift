@@ -32,7 +32,8 @@ final class AppModel {
     var folderPicked: Bool { SharedFolder.picked() != nil }
 
     // Settings (UserDefaults; the API key is in the Keychain)
-    var polishDictation: Bool { didSet { defaults.set(polishDictation, forKey: "polishDictation") } }
+    /// Shared with the keyboard (App Group), which can flip it.
+    var polishDictation: Bool { didSet { Bridge.polishDictation = polishDictation } }
     var autoCopy: Bool { didSet { defaults.set(autoCopy, forKey: "autoCopy") } }
     var model: String { didSet { defaults.set(model, forKey: "model") } }
     var baseURL: String { didSet { defaults.set(baseURL, forKey: "baseURL") } }
@@ -46,7 +47,11 @@ final class AppModel {
     private let engine = AppleSpeechEngine()
 
     init() {
-        polishDictation = defaults.object(forKey: "polishDictation") as? Bool ?? false
+        // Before 0.3.1 this lived in the app's own defaults.
+        if Bridge.defaults.object(forKey: "polishDictation") == nil, let old = defaults.object(forKey: "polishDictation") as? Bool {
+            Bridge.polishDictation = old
+        }
+        polishDictation = Bridge.polishDictation
         autoCopy = defaults.object(forKey: "autoCopy") as? Bool ?? true
         model = defaults.string(forKey: "model") ?? LLMSettings.defaultModel
         baseURL = defaults.string(forKey: "baseURL") ?? LLMSettings.geminiBaseURL.absoluteString
@@ -270,6 +275,7 @@ final class AppModel {
         }
         var pipeline = Pipeline(config: config, llm: hasKey ? LLMClient(settings: LLMSettings(baseURL: URL(string: baseURL.trimmingCharacters(in: .whitespaces)) ?? LLMSettings.geminiBaseURL, model: model, apiKey: apiKey)) : nil)
         pipeline.commandTimeout = .seconds(commandTimeout)
+        if polishDictation != Bridge.polishDictation { polishDictation = Bridge.polishDictation }
         let mode: DictationMode = commandMode ? .command : .dictation(polish: polishDictation)
         let result = await pipeline.run(raw, mode: mode)
         let entry = HistoryEntry(

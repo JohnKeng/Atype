@@ -71,7 +71,7 @@ struct KeyboardView: View {
     private var sessionText: String {
         switch model.phase {
         case .recording: model.commandMode ? "✦ AI 指令，再次點擊以完成" : "再次點擊以完成"
-        case .processing: model.commandMode ? "✦ AI 撰寫中…" : "整理中…"
+        case .processing: model.commandMode ? "✦ AI 撰寫中…" : (model.aiDictation ? "✦ AI 整理中…" : "整理中…")
         default: "準備中…"
         }
     }
@@ -85,6 +85,9 @@ struct KeyboardView: View {
             ZStack {
                 Text("Atype").font(.system(size: 18, weight: .bold))
                     .position(x: 18 + 30, y: 30)
+                if model.hasFullAccess {
+                    modeSwitch.position(x: w - 70, y: 30)
+                }
                 if !model.hasFullAccess {
                     fullAccessNote.frame(width: w - 36).position(x: w / 2, y: 170)
                 } else {
@@ -175,6 +178,33 @@ struct KeyboardView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(model.phase == .recording ? "停止" : "開始說話")
+    }
+
+    /// Top-right: what the main mic does by default. 手機 = on-device only
+    /// (instant); AI = also cleaned up by the AI (1–2 s slower, needs a key).
+    private var modeSwitch: some View {
+        HStack(spacing: 2) {
+            modeSegment("手機", on: !model.aiDictation) { model.setAIDictation(false) }
+            modeSegment("✦ AI", on: model.aiDictation) { model.setAIDictation(true) }
+        }
+        .padding(3)
+        .background(darkFill, in: Capsule())
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("說話預設")
+    }
+
+    private func modeSegment(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 14, weight: on ? .semibold : .regular))
+                .frame(width: 56, height: 30)
+                .background(on ? keyFill : Color.clear, in: Capsule())
+                .foregroundStyle(on && title.contains("AI")
+                                 ? AnyShapeStyle(LinearGradient(colors: aiColors, startPoint: .leading, endPoint: .trailing))
+                                 : AnyShapeStyle(on ? Color.primary : Color.secondary))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private var aiButton: some View {

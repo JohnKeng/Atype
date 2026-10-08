@@ -101,6 +101,8 @@ final class KeyboardViewController: UIInputViewController {
 final class KeyboardModel: ObservableObject {
     @Published var phase: Bridge.Phase = .idle
     @Published var commandMode = false
+    /// The main mic also runs the AI cleanup (top-right switch).
+    @Published var aiDictation = Bridge.polishDictation
     @Published var partial = ""
     @Published var message = ""
     @Published var warm = false
@@ -144,6 +146,7 @@ final class KeyboardModel: ObservableObject {
         needsGlobe = controller?.needsInputModeSwitchKey ?? false
         phase = Bridge.phase
         commandMode = Bridge.commandMode
+        aiDictation = Bridge.polishDictation
         partial = Bridge.partial
         message = Bridge.message
         warm = Bridge.appIsWarm
@@ -181,6 +184,13 @@ final class KeyboardModel: ObservableObject {
     }
 
     func cancel() { Bridge.post(.cancel) }
+
+    func setAIDictation(_ on: Bool) {
+        guard on != aiDictation else { return }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        aiDictation = on
+        Bridge.polishDictation = on
+    }
 
     /// Remove the last dictation from before the cursor (when it is still
     /// there as inserted), keeping it for redo.

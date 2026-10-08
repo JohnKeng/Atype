@@ -52,7 +52,7 @@ struct SettingsView: View {
                     NavigationLink { PromptLibraryView() } label: {
                         LabeledContent("提示詞", value: model.commandPromptName)
                     }
-                    Toggle("聽寫也用 AI 整理（會慢 1～2 秒）", isOn: $model.polishDictation)
+                    Toggle("說話預設用 AI 整理（會慢 1～2 秒，鍵盤右上也能切）", isOn: $model.polishDictation)
                     LabeledContent("AI 指令時間預算") {
                         Stepper("\(Int(model.commandTimeout)) 秒", value: $model.commandTimeout, in: 4...30, step: 1)
                     }
