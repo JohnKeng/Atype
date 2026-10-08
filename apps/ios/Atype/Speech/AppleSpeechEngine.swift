@@ -17,6 +17,15 @@ final class AudioSink: @unchecked Sendable {
     private var converter: AVAudioConverter?
     private var target: AVAudioFormat?
     private var _level: Double = 0
+    private var _buffers = 0
+    private var _peak: Double = 0
+
+    /// Buffers received and loudest level since the take started (to tell a
+    /// silent take from a dead microphone).
+    var stats: (buffers: Int, peak: Double) {
+        lock.lock(); defer { lock.unlock() }
+        return (_buffers, _peak)
+    }
 
     /// Smoothed input level 0…1 of the current take.
     var level: Double {
@@ -27,6 +36,8 @@ final class AudioSink: @unchecked Sendable {
     func attach(_ c: AsyncStream<AnalyzerInput>.Continuation, converter: AVAudioConverter?, target: AVAudioFormat) {
         lock.lock(); defer { lock.unlock() }
         continuation = c
+        _buffers = 0
+        _peak = 0
         self.converter = converter
         self.target = target
     }
@@ -48,7 +59,9 @@ final class AudioSink: @unchecked Sendable {
             let db = 20 * log10(max(rms, 1e-6))
             let v = Double(min(max((db + 50) / 40, 0), 1))
             _level = v > _level ? v : _level * 0.75 + v * 0.25
+            _peak = max(_peak, v)
         }
+        _buffers += 1
         guard let converted = Self.convert(buffer, with: converter, to: target) else { return }
         continuation.yield(AnalyzerInput(buffer: converted))
     }
@@ -118,6 +131,7 @@ final class AppleSpeechEngine {
     private var volatile = ""
 
     var level: Double { sink.level }
+    var takeStats: (buffers: Int, peak: Double) { sink.stats }
 
     /// The microphone is open (recording or on standby).
     var micOpen: Bool { audioEngine.isRunning }
@@ -145,6 +159,17 @@ final class AppleSpeechEngine {
         }
         audioEngine.prepare()
         try audioEngine.start()
+    }
+
+    /// Restart the audio engine (after an interruption or a stalled input),
+    /// keeping the current take attached.
+    func restartMic() throws {
+        audioEngine.stop()
+        if tapInstalled {
+            audioEngine.inputNode.removeTap(onBus: 0)
+            tapInstalled = false
+        }
+        try openMic()
     }
 
     func closeMic() {

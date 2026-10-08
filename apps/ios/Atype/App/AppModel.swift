@@ -53,7 +53,13 @@ final class AppModel {
         }
         polishDictation = Bridge.polishDictation
         autoCopy = defaults.object(forKey: "autoCopy") as? Bool ?? true
-        model = defaults.string(forKey: "model") ?? LLMSettings.defaultModel
+        var savedModel = defaults.string(forKey: "model") ?? LLMSettings.defaultModel
+        if !defaults.bool(forKey: "modelMigrated1"), savedModel == LLMSettings.previousDefaultModel {
+            savedModel = LLMSettings.defaultModel
+            defaults.set(savedModel, forKey: "model")
+        }
+        defaults.set(true, forKey: "modelMigrated1")
+        model = savedModel
         baseURL = defaults.string(forKey: "baseURL") ?? LLMSettings.geminiBaseURL.absoluteString
         commandTimeout = defaults.object(forKey: "commandTimeout") as? Double ?? 12
         apiKey = Keychain.get("llm") ?? ""
@@ -70,6 +76,7 @@ final class AppModel {
         }
         engine.model = recognizer
         listenToKeyboard()
+        observeAudioSession()
         HostTracker.shared.start()
     }
 
@@ -188,8 +195,8 @@ final class AppModel {
     func listenToKeyboard() {
         Bridge.observe(.start) { Task { @MainActor in await self.startFromKeyboard(command: false) } }
         Bridge.observe(.startCommand) { Task { @MainActor in await self.startFromKeyboard(command: true) } }
-        Bridge.observe(.stop) { Task { @MainActor in await self.finish() } }
-        Bridge.observe(.cancel) { Task { @MainActor in await self.cancel() } }
+        Bridge.observe(.stop) { Task { @MainActor in DebugLog.log("app", "stop from keyboard phase=\(self.phase)"); await self.finish() } }
+        Bridge.observe(.cancel) { Task { @MainActor in DebugLog.log("app", "cancel from keyboard"); await self.cancel() } }
         publish()
     }
 
@@ -247,6 +254,7 @@ final class AppModel {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             DebugLog.log("app", "recording fromKeyboard=\(fromKeyboard) command=\(command)")
             if fromKeyboard { returnToHost() }
+            watchMic()
         } catch {
             DebugLog.log("app", "start failed: \(error)")
             errorMessage = "無法開始錄音：\(error.localizedDescription)"
@@ -264,11 +272,12 @@ final class AppModel {
         // Finish the work even if iOS would suspend us (no standby).
         let task = UIApplication.shared.beginBackgroundTask(withName: "atype.process")
         defer { UIApplication.shared.endBackgroundTask(task) }
+        let stats = engine.takeStats
         let raw = await engine.stop()
-        DebugLog.log("app", "stopped raw=\(raw.count) chars: \(raw.prefix(40))")
+        DebugLog.log("app", "stopped raw=\(raw.count) chars buffers=\(stats.buffers) peak=\(String(format: "%.2f", stats.peak)): \(raw.prefix(40))")
         scheduleStandby()
         guard !raw.isEmpty else {
-            errorMessage = "沒有聽到內容"
+            errorMessage = stats.buffers == 0 ? "麥克風沒有收到聲音，請再說一次" : "沒有聽到內容"
             phase = .idle
             publish()
             return
@@ -298,6 +307,45 @@ final class AppModel {
         phase = .idle
         publish()
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    /// A take whose microphone delivers nothing (seen after another app took
+    /// the audio): restart the engine once, early in the take.
+    private func watchMic() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1200))
+            guard phase == .recording, engine.takeStats.buffers == 0 else { return }
+            DebugLog.log("app", "mic stalled: no buffers after 1.2 s, restarting")
+            do { try engine.restartMic() } catch { DebugLog.log("app", "mic restart failed: \(error)") }
+        }
+    }
+
+    /// Phone calls, Siri or another app taking the audio stop our engine;
+    /// bring it back so a take (or standby) keeps working.
+    private func observeAudioSession() {
+        let center = NotificationCenter.default
+        center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { note in
+            let type = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt)
+                .flatMap(AVAudioSession.InterruptionType.init(rawValue:))
+            Task { @MainActor in
+                DebugLog.log("app", "audio interruption \(type == .began ? "began" : "ended") phase=\(self.phase)")
+                guard type == .ended, self.phase == .recording || Bridge.standbyUntil > Date() else { return }
+                do {
+                    try AVAudioSession.sharedInstance().setActive(true)
+                    try self.engine.restartMic()
+                    DebugLog.log("app", "mic restarted after interruption")
+                } catch {
+                    DebugLog.log("app", "mic restart after interruption failed: \(error)")
+                }
+            }
+        }
+        center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { note in
+            let reason = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
+            Task { @MainActor in DebugLog.log("app", "audio route change reason=\(reason) phase=\(self.phase)") }
+        }
+        center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in DebugLog.log("app", "media services reset phase=\(self.phase)") }
+        }
     }
 
     /// ✕: drop this take and close the microphone (no standby).

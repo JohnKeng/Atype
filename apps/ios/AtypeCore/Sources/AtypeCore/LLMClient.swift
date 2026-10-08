@@ -10,7 +10,10 @@ public struct LLMSettings: Codable, Equatable, Sendable {
     public var apiKey: String
 
     public static let geminiBaseURL = URL(string: "https://generativelanguage.googleapis.com/v1beta/openai")!
-    public static let defaultModel = "models/gemini-3.1-flash-lite"
+    public static let defaultModel = "models/gemini-3.5-flash-lite"
+    /// Earlier default; moved to `defaultModel` once (fixes more homophones
+    /// at the same ~1 s, tested 2026-10-08).
+    public static let previousDefaultModel = "models/gemini-3.1-flash-lite"
 
     public init(baseURL: URL = geminiBaseURL, model: String = defaultModel, apiKey: String) {
         self.baseURL = baseURL

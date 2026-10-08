@@ -19,6 +19,24 @@ struct SettingsView: View {
         )
     }
 
+    private var currentProvider: Provider {
+        Provider.all.first { $0.url == model.baseURL } ?? Provider.all.last!
+    }
+
+    /// The model menu: the provider's suggestions, or 其他 (type a name).
+    private var modelChoice: Binding<String> {
+        Binding(
+            get: { currentProvider.models.contains { $0.id == model.model } ? model.model : Provider.customModel },
+            set: { id in
+                if id == Provider.customModel {
+                    if currentProvider.models.contains(where: { $0.id == model.model }) { model.model = "" }
+                } else {
+                    model.model = id
+                }
+            }
+        )
+    }
+
     var body: some View {
         @Bindable var model = model
         NavigationStack {
@@ -52,7 +70,7 @@ struct SettingsView: View {
                     NavigationLink { PromptLibraryView() } label: {
                         LabeledContent("提示詞", value: model.commandPromptName)
                     }
-                    Toggle("說話預設用 AI 整理（會慢 1～2 秒，鍵盤右上也能切）", isOn: $model.polishDictation)
+                    Toggle("說話預設用 AI（鍵盤右上的「手機／AI」切換）", isOn: $model.polishDictation)
                     LabeledContent("AI 指令時間預算") {
                         Stepper("\(Int(model.commandTimeout)) 秒", value: $model.commandTimeout, in: 4...30, step: 1)
                     }
@@ -72,7 +90,13 @@ struct SettingsView: View {
                         .autocorrectionDisabled().textInputAutocapitalization(.never)
                         Button { showKey.toggle() } label: { Image(systemName: showKey ? "eye.slash" : "eye") }.buttonStyle(.borderless)
                     }
-                    TextField("模型", text: $model.model).autocorrectionDisabled().textInputAutocapitalization(.never)
+                    Picker("模型", selection: modelChoice) {
+                        ForEach(currentProvider.models, id: \.id) { Text($0.label).tag($0.id) }
+                        Text("其他（自己輸入）").tag(Provider.customModel)
+                    }
+                    if !currentProvider.models.contains(where: { $0.id == model.model }) {
+                        TextField("模型名稱", text: $model.model).autocorrectionDisabled().textInputAutocapitalization(.never)
+                    }
                     if !LLMClient.isChatModel(model.model) {
                         Text("這個模型不能用來整理文字（live、TTS、圖片…），請換一般的對話模型").font(.caption).foregroundStyle(.orange)
                     }
@@ -133,12 +157,28 @@ struct Provider: Identifiable {
     let name: String
     let url: String
     let model: String
+    /// Suggested chat models, the first is the default.
+    var models: [(id: String, label: String)] = []
 
-    static let all = [
-        Provider(id: "gemini", name: "Gemini", url: LLMSettings.geminiBaseURL.absoluteString, model: LLMSettings.defaultModel),
-        Provider(id: "openai", name: "OpenAI", url: "https://api.openai.com/v1", model: "gpt-5-mini"),
-        Provider(id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/api/v1", model: "google/gemini-3.1-flash-lite"),
-        Provider(id: "groq", name: "Groq", url: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile"),
+    static let customModel = "__custom__"
+
+    static let all: [Provider] = [
+        Provider(id: "gemini", name: "Gemini", url: LLMSettings.geminiBaseURL.absoluteString, model: LLMSettings.defaultModel, models: [
+            ("models/gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite（推薦：約 1 秒，會修同音錯字）"),
+            ("models/gemini-3.1-flash-lite", "Gemini 3.1 Flash-Lite（約 1 秒，較少改字）"),
+            ("models/gemini-3.8-flash", "Gemini 3.8 Flash（改得最準，約 3～5 秒）"),
+        ]),
+        Provider(id: "openai", name: "OpenAI", url: "https://api.openai.com/v1", model: "gpt-5-mini", models: [
+            ("gpt-5-mini", "GPT-5 mini"),
+            ("gpt-5-nano", "GPT-5 nano（較快）"),
+        ]),
+        Provider(id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/api/v1", model: "google/gemini-3.5-flash-lite", models: [
+            ("google/gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite"),
+            ("google/gemini-3.1-flash-lite", "Gemini 3.1 Flash-Lite"),
+        ]),
+        Provider(id: "groq", name: "Groq", url: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile", models: [
+            ("llama-3.3-70b-versatile", "Llama 3.3 70B"),
+        ]),
         Provider(id: "custom", name: "自訂", url: "", model: ""),
     ]
 }

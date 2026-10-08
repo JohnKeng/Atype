@@ -60,7 +60,10 @@ struct KeyboardView: View {
                 .buttonStyle(.plain)
                 .disabled(model.phase != .recording)
                 .position(x: w / 2, y: h / 2 + 4)
-                Text(sessionText).font(.system(size: 16)).foregroundStyle(.secondary)
+                Text(sessionText).font(.system(size: 16, weight: model.commandMode ? .semibold : .regular))
+                    .foregroundStyle(model.commandMode
+                                     ? AnyShapeStyle(LinearGradient(colors: aiColors, startPoint: .leading, endPoint: .trailing))
+                                     : AnyShapeStyle(Color.secondary))
                     .position(x: w / 2, y: h / 2 + 4 + 54 + 26)
             }
         }
@@ -70,8 +73,8 @@ struct KeyboardView: View {
 
     private var sessionText: String {
         switch model.phase {
-        case .recording: model.commandMode ? "✦ AI 指令，再次點擊以完成" : "再次點擊以完成"
-        case .processing: model.commandMode ? "✦ AI 撰寫中…" : (model.aiDictation ? "✦ AI 整理中…" : "整理中…")
+        case .recording: model.commandMode ? "✦ AI 聆聽中，再次點擊以完成" : "再次點擊以完成"
+        case .processing: model.commandMode ? "✦ AI 整理中…" : "整理中…"
         default: "準備中…"
         }
     }
@@ -91,7 +94,7 @@ struct KeyboardView: View {
                 if !model.hasFullAccess {
                     fullAccessNote.frame(width: w - 36).position(x: w / 2, y: 170)
                 } else {
-                    Text(model.message.isEmpty ? "點擊開始說話" : model.message)
+                    Text(model.message.isEmpty ? (model.aiDictation ? "點擊說話，AI 依口令整理成格式" : "點擊開始說話") : model.message)
                         .font(.system(size: 16))
                         .foregroundStyle(model.message.isEmpty ? Color.secondary : Color.orange)
                         .lineLimit(1)
@@ -113,7 +116,6 @@ struct KeyboardView: View {
                     }
                     .buttonStyle(.plain)
                     .position(x: w / 2, y: 258)
-                    aiButton.position(x: 42, y: 258)
                     historyKey("arrow.uturn.forward", enabled: !model.redoStack.isEmpty, action: model.redo)
                         .position(x: 42, y: 96)
                     historyKey("arrow.uturn.backward", enabled: !model.undoStack.isEmpty, action: model.undo)
@@ -160,11 +162,15 @@ struct KeyboardView: View {
     private var isAISession: Bool { model.phase != .idle && model.commandMode }
 
     private var micButton: some View {
-        Button { model.mic(command: false) } label: {
+        Button { model.mic(command: model.aiDictation) } label: {
             ZStack {
                 Capsule()
                     .fill(model.phase == .recording ? Color.red : (scheme == .dark ? Color.white : Color(white: 17 / 255)))
                     .frame(width: 147, height: 59)
+                if model.aiDictation {
+                    Capsule().strokeBorder(AngularGradient(colors: aiColors + [aiColors[0]], center: .center), lineWidth: 3)
+                        .frame(width: 155, height: 67)
+                }
                 Group {
                     switch model.phase {
                     case .recording: Image(systemName: "stop.fill")
@@ -177,11 +183,12 @@ struct KeyboardView: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(model.phase == .recording ? "停止" : "開始說話")
+        .accessibilityLabel(model.phase == .recording ? "停止" : (model.aiDictation ? "開始說話（AI）" : "開始說話"))
     }
 
-    /// Top-right: what the main mic does by default. 手機 = on-device only
-    /// (instant); AI = also cleaned up by the AI (1–2 s slower, needs a key).
+    /// Top-right: what the mic does. 手機 = on-device only (instant);
+    /// AI = the command prompt (cleans up, or writes the format a spoken
+    /// command asks for: 寫成信, 條列…; needs a key).
     private var modeSwitch: some View {
         HStack(spacing: 2) {
             modeSegment("手機", on: !model.aiDictation) { model.setAIDictation(false) }
@@ -205,21 +212,6 @@ struct KeyboardView: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
-    }
-
-    private var aiButton: some View {
-        Button { model.mic(command: true) } label: {
-            ZStack {
-                Circle().fill(keyFill).frame(width: 48, height: 48)
-                Circle().strokeBorder(AngularGradient(colors: aiColors + [aiColors[0]], center: .center), lineWidth: 2)
-                    .frame(width: 48, height: 48)
-                Image(systemName: "sparkles").font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(LinearGradient(colors: aiColors, startPoint: .topLeading, endPoint: .bottomTrailing))
-            }
-        }
-        .buttonStyle(.plain)
-        .disabled(model.phase != .idle)
-        .accessibilityLabel("AI 指令")
     }
 
     private var fullAccessNote: some View {
