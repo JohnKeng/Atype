@@ -252,7 +252,8 @@ final class AppModel {
             publish()
             startLevelMeter()
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            DebugLog.log("app", "recording fromKeyboard=\(fromKeyboard) command=\(command)")
+            let input = AVAudioSession.sharedInstance().currentRoute.inputs.first
+            DebugLog.log("app", "recording fromKeyboard=\(fromKeyboard) command=\(command) input=\(input?.portType.rawValue ?? "none")/\(input?.portName ?? "")")
             if fromKeyboard { returnToHost() }
             watchMic()
         } catch {
@@ -273,8 +274,19 @@ final class AppModel {
         let task = UIApplication.shared.beginBackgroundTask(withName: "atype.process")
         defer { UIApplication.shared.endBackgroundTask(task) }
         let stats = engine.takeStats
-        let raw = await engine.stop()
+        var raw = await engine.stop()
         DebugLog.log("app", "stopped raw=\(raw.count) chars buffers=\(stats.buffers) peak=\(String(format: "%.2f", stats.peak)): \(raw.prefix(40))")
+        // The live pass sometimes returns nothing although the microphone
+        // heard speech: run the recorded take through again, first with the
+        // same model, then with the other one.
+        if raw.isEmpty, stats.buffers > 10, stats.peak > 0.12 {
+            let terms = config.dictionary.map(\.term)
+            for m in [recognizer, recognizer == .dictation ? .speech : .dictation] as [AppleSpeechEngine.Model] {
+                raw = await engine.transcribeLastTake(model: m, contextualStrings: terms)
+                DebugLog.log("app", "retry from file with \(m.rawValue): \(raw.count) chars")
+                if !raw.isEmpty { break }
+            }
+        }
         scheduleStandby()
         guard !raw.isEmpty else {
             errorMessage = stats.buffers == 0 ? "麥克風沒有收到聲音，請再說一次" : "沒有聽到內容"
