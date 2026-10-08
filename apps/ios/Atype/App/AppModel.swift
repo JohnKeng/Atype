@@ -285,7 +285,9 @@ final class AppModel {
         lastEntry = entry
         Bridge.publishResult(entry.text)
         DebugLog.log("app", "published \(entry.text.count) chars")
-        if autoCopy && !fromKeyboard { UIPasteboard.general.string = entry.text }
+        // Copy every result (keyboard takes too): if the text did not reach
+        // the text field, it can still be pasted.
+        if autoCopy { UIPasteboard.general.string = entry.text }
         fromKeyboard = false
         phase = .idle
         publish()

@@ -104,7 +104,9 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Toggle("在 App 裡的結果自動複製", isOn: $model.autoCopy)
+                    Toggle("結果自動複製", isOn: $model.autoCopy)
+                } footer: {
+                    Text("每次說完都把結果放進剪貼簿；鍵盤沒把字插進去時，長按輸入框就能貼上。")
                 }
             }
             .navigationTitle("設定")

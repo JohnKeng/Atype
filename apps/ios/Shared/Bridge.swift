@@ -107,6 +107,12 @@ enum Bridge {
         return text
     }
 
+    /// A result is waiting to be inserted.
+    static var hasPendingResult: Bool {
+        guard let id = defaults.string(forKey: Key.resultID) else { return false }
+        return id != defaults.string(forKey: Key.consumedID)
+    }
+
     /// Forget a pending result (a new take started).
     static func discardResult() {
         defaults.set(defaults.string(forKey: Key.resultID), forKey: Key.consumedID)

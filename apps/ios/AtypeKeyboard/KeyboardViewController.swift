@@ -123,9 +123,18 @@ final class KeyboardModel: ObservableObject {
         self.controller = controller
         Bridge.observe(.changed) { [weak self] in Task { @MainActor in self?.refresh() } }
         Bridge.observe(.level) { [weak self] in Task { @MainActor in self?.level = Bridge.level } }
-        // The "warm" icon follows the app's heartbeat.
+        // The "warm" icon follows the app's heartbeat. The same tick catches a
+        // result whose "changed" notification was missed (the keyboard can be
+        // suspended during a long take), so text is never left behind.
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.warm = Bridge.appIsWarm }
+            Task { @MainActor in
+                guard let self else { return }
+                self.warm = Bridge.appIsWarm
+                if self.visible, Bridge.hasPendingResult || Bridge.phase != self.phase {
+                    if Bridge.hasPendingResult { DebugLog.log("kb", "poll: pending result") }
+                    self.refresh()
+                }
+            }
         }
         refresh()
     }
