@@ -77,6 +77,10 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     override func textDidChange(_ textInput: (any UITextInput)?) {
+        // Diagnostics: after a message is sent the field should read empty;
+        // if it still shows the old text, the keyboard is on a stale field.
+        let before = textDocumentProxy.documentContextBeforeInput ?? ""
+        DebugLog.log("kb", "textDidChange before=\(before.suffix(12)) count=\(before.count)")
         model.refresh()
     }
 
@@ -162,7 +166,6 @@ final class KeyboardModel: ObservableObject {
             undoStack.append(text)
             redoStack.removeAll()
             if ok {
-                Bridge.lastInsertConfirmed = true
                 message = ""
             } else {
                 UIPasteboard.general.string = text

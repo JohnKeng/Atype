@@ -321,24 +321,11 @@ final class AppModel {
         lastEntry = entry
         Bridge.publishResult(entry.text)
         DebugLog.log("app", "published \(entry.text.count) chars")
-        // Copy the result unless the keyboard confirms it reached the text
-        // field: a confirmed take must not push an unconfirmed one off the
-        // clipboard.
-        if autoCopy {
-            if fromKeyboard {
-                let text = entry.text
-                let copyTask = UIApplication.shared.beginBackgroundTask(withName: "atype.copy")
-                Task { @MainActor in
-                    defer { UIApplication.shared.endBackgroundTask(copyTask) }
-                    try? await Task.sleep(for: .seconds(2))
-                    guard !Bridge.lastInsertConfirmed else { return }
-                    UIPasteboard.general.string = text
-                    DebugLog.log("app", "insert not confirmed in 2 s: copied")
-                }
-            } else {
-                UIPasteboard.general.string = entry.text
-            }
-        }
+        // Copy every result. The keyboard's own check reads the field it is
+        // attached to, which in some apps (Claude) can be a stale one after a
+        // message was sent, so "inserted" cannot be trusted; the latest take
+        // is always on the clipboard.
+        if autoCopy { UIPasteboard.general.string = entry.text }
         fromKeyboard = false
         phase = .idle
         publish()
